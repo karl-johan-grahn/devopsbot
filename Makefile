@@ -20,7 +20,6 @@ version.txt:
 
 image.iid: version.txt Dockerfile
 	@docker build \
-	--build-arg TOKEN=$(GITHUB_TOKEN) \
 	--build-arg REVISION=$(REVISION) \
 	--build-arg VERSION=$(VERSION) \
 	--iidfile $@ \

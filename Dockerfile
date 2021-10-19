@@ -2,15 +2,7 @@ FROM golang:1.17.1 AS builder
 
 WORKDIR /go/src/github.com/karl-johan-grahn/devopsbot
 
-ARG TOKEN
-
-ENV GIT_URL=https://"${TOKEN}":@github.com/
-
-RUN git config --global url.${GIT_URL}.insteadOf https://github.com/
-
 COPY . ./
-
-ENV GOPRIVATE github.com/karl-johan-grahn/devopsbot
 
 RUN make build
 

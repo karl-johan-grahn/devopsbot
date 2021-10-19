@@ -1,7 +1,5 @@
 # Incident declaration automation
-
-DevOpsBot can be used to automate incident declaration. The motifs for
-automating incident declaration are:
+Devopsbot automates incident declaration:
 - Incident responders and commanders should focus on the essential tasks of resolving the incident
 - Automate the repetitive steps in the incident management process
 - Keep affected stakeholders informed about the status of the incident
@@ -18,7 +16,7 @@ An incident is defined as something that:
 - Cannot be resolved within 1 hour
 
 ## During incidents
-The workflow during an incident is as follows. The remind function is not yet implemented:
+The workflow during an incident is as follows:
 
 ![incident declaration flow using devopsbot](./devopsbot.drawio.png)
 
