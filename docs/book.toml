@@ -1,0 +1,12 @@
+[book]
+authors = ["DevOps"]
+language = "en"
+multilingual = false
+src = "./src"
+title = "DevOpsBot"
+
+[output.html]
+curly-quotes = false
+git-repository-url = "https://github.com/karl-johan-grahn/devopsbot"
+git-repository-icon = "fa-gitlab"
+edit-url-template = "https://github.com/karl-johan-grahn/devopsbot/-/edit/master/docs/{path}"
