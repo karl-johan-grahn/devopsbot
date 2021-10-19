@@ -19,4 +19,12 @@ jobs:
         env:
           VALIDATE_ALL_CODEBASE: false
           DEFAULT_BRANCH: $default-branch
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+      - name: Vale
+        uses: errata-ai/vale-action@v1.4.0
+        with:
+          styles: https://github.com/errata-ai/write-good/releases/latest/download/write-good.zip
+          config: https://raw.githubusercontent.com/errata-ai/vale/master/.vale.ini
+          files: docs/src
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
