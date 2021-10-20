@@ -84,6 +84,7 @@ func (h *botHandler) handleCommand(w http.ResponseWriter, r *http.Request) {
 	bundle := i18n.NewBundle(language.English)
 	bundle.RegisterUnmarshalFunc("json", json.Unmarshal)
 	bundle.MustLoadMessageFile("active.en.json")
+	bundle.MustLoadMessageFile("active.fr.json")
 	user, err := h.slackClient.GetUserInfoContext(ctx, cmd.UserID)
 	if err != nil {
 		err = middleware.NewHTTPError(fmt.Errorf("failed to get user info: %w", err), r)
