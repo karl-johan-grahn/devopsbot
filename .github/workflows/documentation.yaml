@@ -12,9 +12,9 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Link check
-        run: lychee -vn --offline docs/src/*.md
         with:
           entrypoint: ""
+          args: lychee -vn --offline docs/src/*.md
   spell_check:
     runs-on: ubuntu-latest
     steps:
