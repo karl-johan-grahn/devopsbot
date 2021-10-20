@@ -6,6 +6,13 @@ on:
   pull_request:
     branches: main
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    container: ghcr.io/opencontainers/golangci-lint:v1.39.0
+    steps:
+      - uses: actions/checkout@v2
+      - name: Lint
+        run: make lint
   build:
     runs-on: ubuntu-latest
     steps:
@@ -14,11 +21,16 @@ jobs:
         uses: actions/setup-go@v2
         with:
           go-version: 1.17.1
-      - name: Lint
-        uses: docker://golangci/golangci-lint:v1.42
-        run: make lint
       - name: Build
         run: make build
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.17.1
       - name: Formatting
         run: if [ -n "$(go fmt)" ]; then echo 'Code is not formatted with "go fmt"'; false; fi
       - name: Test
