@@ -1,4 +1,4 @@
-name: "Code Quality"
+name: "Code security analysis"
 
 on:
   push:
