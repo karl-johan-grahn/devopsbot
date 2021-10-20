@@ -6,16 +6,26 @@ on:
   pull_request:
     branches: main
 jobs:
+  # link_check:
+  #   runs-on: ubuntu-latest
+  #   container: lycheeverse/lychee:latest
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - name: Link check
+  #       uses: docker://lycheeverse/lychee:latest
+  #       with:
+  #         entrypoint: ""
+  #         args: lychee -vn --offline docs/src/*.md
   link_check:
     runs-on: ubuntu-latest
-    container: lycheeverse/lychee:latest
     steps:
       - uses: actions/checkout@v2
-      - name: Link check
-        uses: docker://lycheeverse/lychee:latest
+      - name: Link Checker
+        uses: lycheeverse/lychee-action@v1.0.9
         with:
-          entrypoint: ""
-          args: lychee -vn --offline docs/src/*.md
+          args: --verbose --no-progress --offline docs/src/*.md
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
   spell_check:
     runs-on: ubuntu-latest
     steps:
