@@ -21,7 +21,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       # Login against a Docker registry except on PR
-      - name: Log into registry ${{env.REGISTRY}}
+      - name: Log into Docker registry ${{env.REGISTRY}}
         if: github.event_name != 'pull_request'
         uses: docker/login-action@v1.10.0
         with:

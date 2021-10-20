@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Link Checker
+      - name: Link check
         uses: gaurav-nelson/github-action-markdown-link-check@v1
         with:
           config-file: '.github/md_config.json'
