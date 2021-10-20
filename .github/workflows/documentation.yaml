@@ -21,11 +21,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Link Checker
-        uses: lycheeverse/lychee-action@v1.0.9
-        with:
-          args: --verbose --no-progress docs/src/*.md
-        env:
-          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+        uses: gaurav-nelson/github-action-markdown-link-check@v1.0.13
   spell_check:
     runs-on: ubuntu-latest
     steps:
