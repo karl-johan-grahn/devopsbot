@@ -1,0 +1,29 @@
+name: Documentation checks
+
+on:
+  push:
+    branches: main
+  pull_request:
+    branches: main
+jobs:
+  link_check:
+    runs-on: ubuntu-latest
+    container: lycheeverse/lychee:latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Link check
+        run: lychee -vn --offline docs/src/*.md
+        with:
+          entrypoint: ""
+  spell_check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Spell check
+        uses: errata-ai/vale-action@v1.4.0
+        with:
+          styles: https://github.com/errata-ai/write-good/releases/latest/download/write-good.zip
+          config: https://raw.githubusercontent.com/errata-ai/vale/master/.vale.ini
+          files: docs/src
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}

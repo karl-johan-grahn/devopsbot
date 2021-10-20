@@ -1,0 +1,17 @@
+name: Dockerfile lint
+
+on:
+  push:
+    branches: main
+  pull_request:
+    branches: main
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Docker lint
+        uses: hadolint/hadolint-action@v1.6.0
+        with:
+          dockerfile: Dockerfile
+          failure-threshold: warning
