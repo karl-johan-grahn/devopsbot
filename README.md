@@ -11,3 +11,7 @@ The application is built around three key principles:
 1. Everything the bot can do, any person is able to do - if it goes down and is unavailable, it will not block anyone
 1. Secrets are maintained externally, for example via Hashicorp Vault
 1. Configuration is maintained externally, for example via Kubernetes config maps
+
+## Documentation
+
+For more information, see the [Devopsbot documentation](https://karl-johan-grahn.github.io/devopsbot/).
