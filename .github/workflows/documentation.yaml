@@ -18,6 +18,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - name: test
+        run: ls -l
       - name: Spell check
         uses: errata-ai/vale-action@v1.4.0
         with:
@@ -25,3 +27,20 @@ jobs:
           files: docs/src
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+  build_and_deploy:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: ${{github.workflow}}-${{github.ref}}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup mdBook
+        uses: peaceiris/actions-mdbook@v1
+        with:
+          mdbook-version: 0.4.13
+      - run: mdbook build ./docs
+      - name: Deploy
+        uses: peaceiris/actions-gh-pages@v3
+        if: ${{github.ref == 'refs/heads/main'}}
+        with:
+          github_token: ${{secrets.GITHUB_TOKEN}}
+          publish_dir: ./book
