@@ -18,6 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+        fetch-depth: 0
       - name: List files
         run: ls -l
       - name: Spell check
