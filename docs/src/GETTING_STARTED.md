@@ -24,7 +24,7 @@ The bot can be deployed any preferred way.
 ### Kubernetes
 A certificate need to be issued to expose the application over HTTPS, for example via ZeroSSL or Let's Encrypt.
 
-The application need to be made publically available.
+The application need to be made publicly available.
 
 The Kubernetes resources could look like this for example:
 
@@ -222,14 +222,14 @@ spec:
 ```
 
 ## Local development
-To run locally you need valid certificates (use `mkcert`), and you need `devopsbot` to resolve to `127.0.0.1`:
+To run the bot locally a valid certificates is needed by using for example `mkcert`, and `devopsbot` need to resolve to `127.0.0.1`:
 
 ```console
 $ mkcert devopsbot
 $ sudo echo "127.0.0.1 devopsbot" >> /etc/hosts
 ```
 
-Then, you can run a local copy after having provided values for parameters
+Then, run a local copy after having provided values for parameters
 that are empty by default:
 
 ```console
@@ -238,7 +238,7 @@ $ bin/devopsbot \
   --slack.signingSecret=...
 ```
 
-And access it at https://devopsbot:3443 or http://devopsbot:3333
+And access it at <https://devopsbot:3443> or <http://devopsbot:3333>.
 
 See the `--help` output for more flags.
 
