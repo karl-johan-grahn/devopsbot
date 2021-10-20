@@ -13,7 +13,7 @@ jobs:
       - name: Link check
         uses: gaurav-nelson/github-action-markdown-link-check@v1
         with:
-          config-file: '.github/md_config.json'
+          config-file: .github/md_config.json
   spell_check:
     runs-on: ubuntu-latest
     steps:
@@ -22,7 +22,7 @@ jobs:
         uses: errata-ai/vale-action@v1.4.0
         with:
           styles: https://github.com/errata-ai/write-good/releases/latest/download/write-good.zip
-          config: https://raw.githubusercontent.com/errata-ai/vale/master/.vale.ini
+          config: .github/.vale.ini
           files: docs/src
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
