@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.4.0] - 2021-10-21
 ### Adds
-- Add code quality check via CodeQL
+- Add CodeQL to find security vulnerabilities
 
 ## [0.3.0] - 2021-10-20
 ### Adds
