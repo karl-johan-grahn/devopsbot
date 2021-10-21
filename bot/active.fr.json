@@ -1,0 +1,106 @@
+{
+  "ArchiveIncidentChannel": {
+    "hash": "sha1-90cc2c32c36fce8cf288c6347d59c422aa62d3fa",
+    "other": "Archiver la chaîne d'incident"
+  },
+  "BroadcastChannel": {
+    "hash": "sha1-845a561e5462c72da21abaa141c66b897c0b4e8c",
+    "other": "Annoncer la chaîne"
+  },
+  "BroadcastChannelHint": {
+    "hash": "sha1-f8e9c1d67d11ff535f6db070acfaed5edb3f7d49",
+    "other": "DevOpsBot va être invité, si il n'est pas déjà membre"
+  },
+  "Cancel": {
+    "hash": "sha1-77dfd2135f4db726c47299bb55be26f7f4525a46",
+    "other": "Annuler"
+  },
+  "Commander": {
+    "hash": "sha1-79056c7ae5c30b8c10b7dc753c066d42087ce897",
+    "other": "Commander"
+  },
+  "DeclareIncident": {
+    "hash": "sha1-d3ac7bd120afc1502fcd30fe3bdffad2ebe02fd0",
+    "other": "Déclarer incident"
+  },
+  "DeclareNewIncident": {
+    "hash": "sha1-6854e7716993f29b1f6aea0860b29927f9fc2ab9",
+    "other": "Déclarer un nouveaux incident"
+  },
+  "Environment": {
+    "hash": "sha1-d443a1185575c125d61e0af393b044d7b06ef572",
+    "other": "Environnement"
+  },
+  "HelpMessage": {
+    "hash": "sha1-90c206001e9980c47faaa55d0aa95eea77217878",
+    "other": "Voici les commandes disponibles::\n> `/devopsbot help` - Aide\n> `/devopsbot incident` - Déclare un incident\n> `/devopsbot resolve` - Résoudre un incident"
+  },
+  "Incident": {
+    "hash": "sha1-08c257849b049b92c6f6fbff0c7623c0f070d236",
+    "other": "Incident"
+  },
+  "IncidentChannelNamePattern": {
+    "hash": "sha1-0f329d90b77678464303946187d5ae46eb7799bd",
+    "other": "Choisissez une chaîne qui commence avec 'inc_'"
+  },
+  "IncidentCreationDescription": {
+    "hash": "sha1-fbf76f73115aa59f83a7da722257d61e5d5bda92",
+    "other": "Cela va créer une chaîne #inc_&lt;Nom de l'incident&gt;_&lt;date&gt;, et annonce l'incident à l'organisation"
+  },
+  "IncidentName": {
+    "hash": "sha1-d029d39391b470fedcf5f170ac381cdcf2156641",
+    "other": "Nom de l'incident"
+  },
+  "IncidentNameHint": {
+    "hash": "sha1-0d30363a1e31da22eabdb40447edd0ca458209cd",
+    "other": "Nom de l'incident: ne doit contenir que des miniscules, nombres, -,_  et avoir moins de 60 charatères"
+  },
+  "Invitees": {
+    "hash": "sha1-33ef457083732d7a0342479b89eef3b78deaf816",
+    "other": "Invitées"
+  },
+  "No": {
+    "hash": "sha1-816c52fd2bdd94a63cd0944823a6c0aa9384c103",
+    "other": "Non"
+  },
+  "Region": {
+    "hash": "sha1-0f217179940c6d89f5cb2c7002a58d91ab7286c1",
+    "other": "Région"
+  },
+  "Resolution": {
+    "hash": "sha1-516aae52959dcf5398a9985414a78b8c24a4f0e5",
+    "other": "Résolution"
+  },
+  "ResolveAnIncident": {
+    "hash": "sha1-4a39e14c4a08911ea3ebed6a759d97f890407411",
+    "other": "Résoudre un incident"
+  },
+  "ResolveIncident": {
+    "hash": "sha1-3d85239c1f88e3307832d930a97e58a9fe6cda4c",
+    "other": "Résoudre un incident"
+  },
+  "ResolveIncidentDescription": {
+    "hash": "sha1-59a43fd500805238033d358abc53a561bf0c7348",
+    "other": "Cela va résoudre un incident en archivant automatiquement la chaîne incident et informer la résolutions à l'organisation"
+  },
+  "Responder": {
+    "hash": "sha1-20c9b55802cc9b2886ed7be49e5374d7f8663e9e",
+    "other": "Intervenant"
+  },
+  "SecurityIncident": {
+    "hash": "sha1-91e5c8b989834aa30ff6dd176eade6ebde853a94",
+    "other": "Incident de Sécuritée"
+  },
+  "SecurityIncidentLabel": {
+    "hash": "sha1-bcaf6cba92368b7eb4c0a882bdced37f58882f1f",
+    "other": "Définir la chaîne d'incident comme privé"
+  },
+  "Summary": {
+    "hash": "sha1-12b71c3e0fe5f7c0b8d17cc03186e281412da4a8",
+    "other": "Résumé"
+  },
+  "Yes": {
+    "hash": "sha1-5397e0583f14f6c88de06b1ef28f460a1fb5b0ae",
+    "other": "Oui"
+  }
+}
