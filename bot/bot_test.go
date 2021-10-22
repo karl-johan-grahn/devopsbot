@@ -73,8 +73,8 @@ func TestHandleCommand(t *testing.T) {
 			members: []string{"adminuser"},
 		},
 		opts: Opts{
-			AdminGroupID: "admingroup",
-			ChannelID:    "channel",
+			AdminGroupID:       "admingroup",
+			BroadcastChannelID: "channel",
 		},
 	}
 

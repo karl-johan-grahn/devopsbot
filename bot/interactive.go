@@ -144,7 +144,6 @@ type inputParams struct {
 	incidentRegionsAffected      string
 	incidentSummary              string
 	incidentDeclarer             string
-	broadcastChannel             string
 }
 
 type validationError struct {
@@ -196,7 +195,6 @@ func (h *botHandler) declareIncident(ctx context.Context, payload *slack.Interac
 		incidentRegionsAffected:      strings.Join(incidentRegionsAffected, ", "),
 		incidentSummary:              payload.View.State.Values["incident_summary"]["incident_summary"].Value,
 		incidentDeclarer:             payload.User.ID,
-		broadcastChannel:             payload.View.State.Values["broadcast_channel"]["broadcast_channel"].SelectedConversation,
 	}
 
 	// Create channel - should be done here because it will update the modal if there are errors
@@ -208,26 +206,7 @@ func (h *botHandler) declareIncident(ctx context.Context, payload *slack.Interac
 		}, w)
 	}
 
-	// Invite devopsbot to broad cast channel so it is able to send messages there.
-	// If it is already in the channel, don't return the error, just continue.
-	authTestResp, _ := h.slackClient.AuthTestContext(ctx)
-	if _, err := h.slackClient.InviteUsersToConversationContext(ctx, inputParams.broadcastChannel, authTestResp.UserID); err != nil {
-		if err.Error() != alreadyInChannel {
-			return postErrorResponse(ctx, map[string]string{
-				"broadcast_channel": fmt.Sprintf("%s - %s", inputParams.broadcastChannel, err),
-			}, w)
-		}
-	}
-	// Invite devopsbot to incident channel so it is able to perform actions there
-	if _, err := h.slackClient.InviteUsersToConversationContext(ctx, incidentChannel.ID, authTestResp.UserID); err != nil {
-		if err.Error() != alreadyInChannel {
-			return postErrorResponse(ctx, map[string]string{
-				"incident_name": fmt.Sprintf("%s - %s", incidentChannel.ID, err),
-			}, w)
-		}
-	}
-
-	if err := h.sendMessage(ctx, inputParams.broadcastChannel, slack.MsgOptionPostEphemeral(inputParams.incidentDeclarer),
+	if err := h.sendMessage(ctx, h.opts.BroadcastChannelID, slack.MsgOptionPostEphemeral(inputParams.incidentDeclarer),
 		slack.MsgOptionText(fmt.Sprintf("Started work on declaring the incident <#%s>", incidentChannel.ID), false)); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return err
@@ -262,14 +241,14 @@ func (h *botHandler) doIncidentTasks(ctx context.Context, params *inputParams, i
 		params.incidentSummary, params.incidentEnvironmentsAffected, params.incidentRegionsAffected,
 		params.incidentResponder, params.incidentCommander, params.incidentDeclarer)
 	if _, err := h.slackClient.SetPurposeOfConversationContext(ctx, incidentChannel.ID, overview); err != nil {
-		if sendErr := h.sendMessage(ctx, params.broadcastChannel, slack.MsgOptionPostEphemeral(params.incidentDeclarer),
+		if sendErr := h.sendMessage(ctx, h.opts.BroadcastChannelID, slack.MsgOptionPostEphemeral(params.incidentDeclarer),
 			slack.MsgOptionText(fmt.Sprintf("Failed to set purpose for incident channel: %s", err.Error()), false)); sendErr != nil {
 			log.Error().Err(sendErr).Msg(sendError)
 			return
 		}
 	}
 	if _, err := h.slackClient.SetTopicOfConversationContext(ctx, incidentChannel.ID, overview); err != nil {
-		if sendErr := h.sendMessage(ctx, params.broadcastChannel, slack.MsgOptionPostEphemeral(params.incidentDeclarer),
+		if sendErr := h.sendMessage(ctx, h.opts.BroadcastChannelID, slack.MsgOptionPostEphemeral(params.incidentDeclarer),
 			slack.MsgOptionText(fmt.Sprintf("Failed to set topic for incident channel: %s", err.Error()), false)); sendErr != nil {
 			log.Error().Err(sendErr).Msg(sendError)
 			return
@@ -279,7 +258,7 @@ func (h *botHandler) doIncidentTasks(ctx context.Context, params *inputParams, i
 	// does not accept group as user so have to specify users individually
 	if _, err := h.slackClient.InviteUsersToConversationContext(ctx, incidentChannel.ID, params.incidentInvitees...); err != nil {
 		if err.Error() != alreadyInChannel {
-			if sendErr := h.sendMessage(ctx, params.broadcastChannel, slack.MsgOptionPostEphemeral(params.incidentDeclarer),
+			if sendErr := h.sendMessage(ctx, h.opts.BroadcastChannelID, slack.MsgOptionPostEphemeral(params.incidentDeclarer),
 				slack.MsgOptionText(fmt.Sprintf("Failed to add invitees to incident channel: %s", err.Error()), false)); sendErr != nil {
 				log.Error().Err(sendErr).Msg(sendError)
 				return
@@ -287,7 +266,7 @@ func (h *botHandler) doIncidentTasks(ctx context.Context, params *inputParams, i
 		}
 	}
 	// Inform about incident
-	if err := h.sendMessage(ctx, params.broadcastChannel,
+	if err := h.sendMessage(ctx, h.opts.BroadcastChannelID,
 		slack.MsgOptionText(fmt.Sprintf(":rotating_siren: An incident has been declared by <@%s>\n"+
 			"*Summary:* %s\n"+
 			"*Environment affected:* %s\n"+
@@ -317,13 +296,13 @@ func (h *botHandler) doIncidentTasks(ctx context.Context, params *inputParams, i
 	// Add channel reminder about updating about progress
 	if _, err := h.slackClient.AddChannelReminder(
 		incidentChannel.ID,
-		fmt.Sprintf("Reminder for IC <@%s>: Update progress about the incident in <#%s>", params.incidentCommander, params.broadcastChannel),
+		fmt.Sprintf("Reminder for IC <@%s>: Update progress about the incident in <#%s>", params.incidentCommander, h.opts.BroadcastChannelID),
 		"Every 30 min"); err != nil {
 		log.Error().Err(err).Msg(sendError)
 		return
 	}
 	// Inform about being done with declaring incident
-	if err := h.sendMessage(ctx, params.broadcastChannel, slack.MsgOptionPostEphemeral(params.incidentDeclarer),
+	if err := h.sendMessage(ctx, h.opts.BroadcastChannelID, slack.MsgOptionPostEphemeral(params.incidentDeclarer),
 		slack.MsgOptionText(fmt.Sprintf("Finished declaring the incident %s", params.incidentChannelName), false)); err != nil {
 		log.Error().Err(err).Msg(sendError)
 		return
@@ -339,8 +318,6 @@ type resolveParams struct {
 	incidentArchive bool
 	// Whow is resolving the incident
 	incidentResolver string
-	// Broadcast channel to announce resolvement
-	broadcastChannel string
 }
 
 // resolveIncident - handler for resolving incidents
@@ -359,21 +336,20 @@ func (h *botHandler) resolveIncident(ctx context.Context, payload *slack.Interac
 		incidentResolution: payload.View.State.Values["resolution"]["resolution"].Value,
 		incidentArchive:    payload.View.State.Values["archive_choice"]["archive_choice"].SelectedOption.Value == "Yes",
 		incidentResolver:   payload.User.ID,
-		broadcastChannel:   payload.View.State.Values["broadcast_channel"]["broadcast_channel"].SelectedConversation,
 	}
 
 	// Invite devopsbot to broad cast channel so it is able to send messages there.
 	// If it is already in the channel, don't return the error, just continue.
 	authTestResp, _ := h.slackClient.AuthTestContext(ctx)
-	if _, err := h.slackClient.InviteUsersToConversationContext(ctx, resolveParams.broadcastChannel, authTestResp.UserID); err != nil {
+	if _, err := h.slackClient.InviteUsersToConversationContext(ctx, h.opts.BroadcastChannelID, authTestResp.UserID); err != nil {
 		if err.Error() != alreadyInChannel {
 			return postErrorResponse(ctx, map[string]string{
-				"broadcast_channel": fmt.Sprintf("%s - %s", resolveParams.broadcastChannel, err),
+				"broadcast_channel": fmt.Sprintf("%s - %s", h.opts.BroadcastChannelID, err),
 			}, w)
 		}
 	}
 
-	if err := h.sendMessage(ctx, resolveParams.broadcastChannel, slack.MsgOptionPostEphemeral(resolveParams.incidentResolver),
+	if err := h.sendMessage(ctx, h.opts.BroadcastChannelID, slack.MsgOptionPostEphemeral(resolveParams.incidentResolver),
 		slack.MsgOptionText(fmt.Sprintf("Started work on resolving the incident <#%s>", incChannel.Name), false)); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return err
@@ -391,7 +367,7 @@ func (h *botHandler) doResolveTasks(ctx context.Context, params *resolveParams) 
 	log := zerolog.Ctx(ctx)
 	const sendError = "Could not send failure message"
 	// Inform about resolution
-	if err := h.sendMessage(ctx, params.broadcastChannel,
+	if err := h.sendMessage(ctx, h.opts.BroadcastChannelID,
 		slack.MsgOptionText(fmt.Sprintf(":white_check_mark: The incident <#%s> has been resolved!\n"+
 			"*Resolution:* %s",
 			params.incidentChannel, params.incidentResolution), false)); err != nil {
@@ -405,7 +381,7 @@ func (h *botHandler) doResolveTasks(ctx context.Context, params *resolveParams) 
 		}
 	}
 	// Inform about being done with declaring incident
-	if err := h.sendMessage(ctx, params.broadcastChannel, slack.MsgOptionPostEphemeral(params.incidentResolver),
+	if err := h.sendMessage(ctx, h.opts.BroadcastChannelID, slack.MsgOptionPostEphemeral(params.incidentResolver),
 		slack.MsgOptionText(fmt.Sprintf("Finished resolving the incident <#%s>", params.incidentChannel), false)); err != nil {
 		log.Error().Err(err).Msg(sendError)
 		return

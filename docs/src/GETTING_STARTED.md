@@ -1,4 +1,13 @@
 # Getting started
+## Invite bot to broadcast channel
+For security reasons, the Slack API prohibits bots to invite themselves to channels.
+The bot therefore needs to be manually invited to the chosen broadcast channel before it can communicate there.
+Invite the bot to the broadcast channel by using this command in the channel:
+
+```console
+/invite devopsbot
+```
+
 ## Build
 These instructions assume you are on a Mac.
 
@@ -150,10 +159,10 @@ spec:
                 secretKeyRef:
                   key: slack.adminGroupID
                   name: app-secrets
-            - name: slack.channelID
+            - name: slack.broadcastChannelID
               valueFrom:
                 secretKeyRef:
-                  key: slack.channelID
+                  key: slack.broadcastChannelID
                   name: app-secrets
             - name: slack.signingSecret
               valueFrom:
