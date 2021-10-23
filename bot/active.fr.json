@@ -7,10 +7,6 @@
     "hash": "sha1-845a561e5462c72da21abaa141c66b897c0b4e8c",
     "other": "Annoncer la chaîne"
   },
-  "BroadcastChannelHint": {
-    "hash": "sha1-f8e9c1d67d11ff535f6db070acfaed5edb3f7d49",
-    "other": "DevOpsBot va être invité, si il n'est pas déjà membre"
-  },
   "Cancel": {
     "hash": "sha1-77dfd2135f4db726c47299bb55be26f7f4525a46",
     "other": "Annuler"

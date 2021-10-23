@@ -1,7 +1,6 @@
 {
   "ArchiveIncidentChannel": "Archive incident channel",
   "BroadcastChannel": "Broadcast channel",
-  "BroadcastChannelHint": "DevOpsBot will be invited to this channel if it is not already a member",
   "Cancel": "Cancel",
   "Commander": "Commander",
   "DeclareIncident": "Declare incident",

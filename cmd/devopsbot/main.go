@@ -31,7 +31,7 @@ const (
 	slackAccessToken   = "slack.accessToken"
 	slackSigningSecret = "slack.signingSecret"
 	slackAdminGroup    = "slack.adminGroupID"
-	slackChannelID     = "slack.channelID"
+	broadcastChannelID = "slack.broadcastChannelID"
 )
 
 func initFlags(cmd *cobra.Command) {
@@ -49,7 +49,7 @@ func initFlags(cmd *cobra.Command) {
 	cmd.Flags().String(slackAccessToken, "", "Slack bot access token")
 	cmd.Flags().String(slackSigningSecret, "", "Slack bot signing secret")
 	cmd.Flags().String(slackAdminGroup, "", "Slack ID for the admin user group")
-	cmd.Flags().String(slackChannelID, "", "Slack ID for the channel to use as default broadcasting channel")
+	cmd.Flags().String(broadcastChannelID, "", "Slack ID for the channel to use as the broadcast channel")
 
 	cmd.Flags().String("config", "config.yaml", "Config file to read (optional)")
 
@@ -107,7 +107,7 @@ func initConfig(cmd *cobra.Command) func() {
 		_ = viper.BindEnv(slackAccessToken, slackAccessToken)
 		_ = viper.BindEnv(slackSigningSecret, slackSigningSecret)
 		_ = viper.BindEnv(slackAdminGroup, slackAdminGroup)
-		_ = viper.BindEnv(slackChannelID, slackChannelID)
+		_ = viper.BindEnv(broadcastChannelID, broadcastChannelID)
 	}
 }
 
@@ -155,7 +155,7 @@ func newCmd() *cobra.Command {
 			opts := bot.Opts{
 				SigningSecret:          cfg.SlackSigningSecret,
 				AdminGroupID:           cfg.SlackAdminGroupID,
-				ChannelID:              cfg.SlackChannelID,
+				BroadcastChannelID:     cfg.BroadcastChannelID,
 				IncidentDocTemplateURL: cfg.IncidentDocTemplateURL,
 				IncidentEnvs:           cfg.IncidentEnvs,
 				IncidentRegions:        cfg.IncidentRegions,

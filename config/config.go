@@ -11,7 +11,7 @@ type Config struct {
 	SlackAccessToken   string
 	SlackSigningSecret string
 	SlackAdminGroupID  string
-	SlackChannelID     string
+	BroadcastChannelID string
 
 	Addr    string
 	TLSAddr string
@@ -31,7 +31,7 @@ func FromViper(v *viper.Viper) (Config, error) {
 	c.SlackAccessToken = v.GetString("slack.accessToken")
 	c.SlackSigningSecret = v.GetString("slack.signingSecret")
 	c.SlackAdminGroupID = v.GetString("slack.adminGroupID")
-	c.SlackChannelID = v.GetString("slack.channelID")
+	c.BroadcastChannelID = v.GetString("slack.broadcastChannelID")
 
 	c.Addr = v.GetString("addr")
 	c.TLSAddr = v.GetString("tls.addr")

@@ -10,7 +10,7 @@ func TestInitFlags(t *testing.T) {
 	cmd := newCmd()
 	// Before initialization these flags should not have been set
 	flags := []string{"addr", "tls.addr", "tls.cert", "tls.key", "slack.accessToken",
-		"slack.signingSecret", "slack.adminGroupID", "slack.channelID"}
+		"slack.signingSecret", "slack.adminGroupID", "slack.broadcastChannelID"}
 	for _, f := range flags {
 		_, err := cmd.Flags().GetString(f)
 		assert.Error(t, err)

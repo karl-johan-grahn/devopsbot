@@ -32,8 +32,8 @@ type ugMembers struct {
 type Opts struct {
 	// SigningSecret - the signing secret from the Slack app config
 	SigningSecret string
-	// ChannelID - the ID of the main Slack channel the bot will be present in
-	ChannelID string
+	// BroadcastChannelID - the ID of the Slack channel the bot will broadcast in
+	BroadcastChannelID string
 	// AdminGroupID - the ID of the user group that will have admin rights to interact with the bot
 	AdminGroupID string
 	// IncidentDocTemplateURL - the URL of the incident document template
@@ -280,27 +280,6 @@ func (h *botHandler) cmdIncident(ctx context.Context, w http.ResponseWriter, cmd
 	inviteeBlock := slack.NewInputBlock("incident_invitees", inviteeLabel, inviteeOption)
 	inviteeBlock.Optional = true
 
-	broadcastChLabel := slack.NewTextBlockObject(slack.PlainTextType,
-		h.opts.Localizer.MustLocalize(&i18n.LocalizeConfig{
-			DefaultMessage: &i18n.Message{
-				ID:    "BroadcastChannel",
-				Other: "Broadcast channel"},
-		}), false, false)
-	broadcastChOption := slack.NewOptionsSelectBlockElement(slack.OptTypeConversations, broadcastChLabel, "broadcast_channel")
-	broadcastChOption.InitialConversation = h.opts.ChannelID
-	broadcastChOption.Filter = &slack.SelectBlockElementFilter{
-		Include:                       []string{"public"},
-		ExcludeExternalSharedChannels: false,
-		ExcludeBotUsers:               false,
-	}
-	broadcastChBlock := slack.NewInputBlock("broadcast_channel", broadcastChLabel, broadcastChOption)
-	broadcastChBlock.Hint = slack.NewTextBlockObject(slack.PlainTextType,
-		h.opts.Localizer.MustLocalize(&i18n.LocalizeConfig{
-			DefaultMessage: &i18n.Message{
-				ID:    "BroadcastChannelHint",
-				Other: "DevOpsBot will be invited to this channel if it is not already a member"},
-		}), false, false)
-
 	blocks := slack.Blocks{
 		BlockSet: []slack.Block{
 			contextBlock,
@@ -312,7 +291,6 @@ func (h *botHandler) cmdIncident(ctx context.Context, w http.ResponseWriter, cmd
 			regionBlock,
 			summaryBlock,
 			inviteeBlock,
-			broadcastChBlock,
 		},
 	}
 
@@ -420,34 +398,12 @@ func (h *botHandler) cmdResolveIncident(ctx context.Context, w http.ResponseWrit
 	resolutionElement.Multiline = true
 	resolutionBlock := slack.NewInputBlock("resolution", resolutionLabel, resolutionElement)
 
-	broadcastChLabel := slack.NewTextBlockObject(slack.PlainTextType,
-		h.opts.Localizer.MustLocalize(&i18n.LocalizeConfig{
-			DefaultMessage: &i18n.Message{
-				ID:    "BroadcastChannel",
-				Other: "Broadcast channel"},
-		}), false, false)
-	broadcastChOption := slack.NewOptionsSelectBlockElement(slack.OptTypeConversations, broadcastChLabel, "broadcast_channel")
-	broadcastChOption.InitialConversation = h.opts.ChannelID
-	broadcastChOption.Filter = &slack.SelectBlockElementFilter{
-		Include:                       []string{"public"},
-		ExcludeExternalSharedChannels: false,
-		ExcludeBotUsers:               false,
-	}
-	broadcastChBlock := slack.NewInputBlock("broadcast_channel", broadcastChLabel, broadcastChOption)
-	broadcastChBlock.Hint = slack.NewTextBlockObject(slack.PlainTextType,
-		h.opts.Localizer.MustLocalize(&i18n.LocalizeConfig{
-			DefaultMessage: &i18n.Message{
-				ID:    "BroadcastChannelHint",
-				Other: "DevOpsBot will be invited to this channel if it is not already a member"},
-		}), false, false)
-
 	blocks := slack.Blocks{
 		BlockSet: []slack.Block{
 			contextBlock,
 			incChanBlock,
 			archiveBlock,
 			resolutionBlock,
-			broadcastChBlock,
 		},
 	}
 
