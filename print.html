@@ -139,6 +139,12 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="getting-started"><a class="header" href="#getting-started">Getting started</a></h1>
+<h2 id="invite-bot-to-broadcast-channel"><a class="header" href="#invite-bot-to-broadcast-channel">Invite bot to broadcast channel</a></h2>
+<p>For security reasons, the Slack API prohibits bots to invite themselves to channels.
+The bot therefore needs to be manually invited to the chosen broadcast channel before it can communicate there.
+Invite the bot to the broadcast channel by using this command in the channel:</p>
+<pre><code class="language-console">/invite devopsbot
+</code></pre>
 <h2 id="build"><a class="header" href="#build">Build</a></h2>
 <p>These instructions assume you are on a Mac.</p>
 <p>Make sure you have the latest version of Go installed: <code>brew update &amp;&amp; brew upgrade</code></p>
@@ -276,10 +282,10 @@ spec:
                 secretKeyRef:
                   key: slack.adminGroupID
                   name: app-secrets
-            - name: slack.channelID
+            - name: slack.broadcastChannelID
               valueFrom:
                 secretKeyRef:
-                  key: slack.channelID
+                  key: slack.broadcastChannelID
                   name: app-secrets
             - name: slack.signingSecret
               valueFrom:
