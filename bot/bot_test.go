@@ -165,10 +165,6 @@ func (c *dummyClient) GetUserGroupMembersContext(ctx context.Context, userGroup 
 	return c.members, c.err
 }
 
-func (c *dummyClient) UpdateMessageContext(ctx context.Context, channelID string, timestamp string, options ...slack.MsgOption) (_channel string, _timestamp string, _text string, err error) {
-	return "", "", "", err
-}
-
 func (c *dummyClient) OpenViewContext(ctx context.Context, triggerID string, view slack.ModalViewRequest) (*slack.ViewResponse, error) {
 	return c.viewResponse, c.err
 }
@@ -203,10 +199,6 @@ func (c *dummyClient) InviteUsersToConversationContext(ctx context.Context, chan
 
 func (c *dummyClient) AddChannelReminder(channelID string, text string, time string) (*slack.Reminder, error) {
 	return c.Reminder, c.err
-}
-
-func (c *dummyClient) AuthTestContext(ctx context.Context) (*slack.AuthTestResponse, error) {
-	return c.AuthTestResponse, c.err
 }
 
 func (c *dummyClient) GetUserInfoContext(ctx context.Context, user string) (*slack.User, error) {
