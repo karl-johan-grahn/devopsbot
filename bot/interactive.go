@@ -58,7 +58,7 @@ func (h *botHandler) handleInteractive(w http.ResponseWriter, r *http.Request) {
 				}
 			} else {
 				if uerr := h.updateView(ctx, payload, "incident_name", "declare_incident",
-					"This will create a channel name: #"+createChannelName(action.Value), w); uerr != nil {
+					fmt.Sprintf("This will create this channel name: #%s", createChannelName(action.Value)), w); uerr != nil {
 					uerr = middleware.NewHTTPError(uerr, r)
 					log.Error().Err(uerr).Msg("updateView failed")
 					w.WriteHeader(http.StatusInternalServerError)
