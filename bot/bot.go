@@ -168,7 +168,8 @@ func (h *botHandler) cmdIncident(ctx context.Context, w http.ResponseWriter, cmd
 		h.opts.Localizer.MustLocalize(&i18n.LocalizeConfig{
 			DefaultMessage: &i18n.Message{
 				ID:    "IncidentCreationDescription",
-				Other: "This will create a slack channel #inc_&lt;Incident Name&gt;_&lt;date&gt;, and notify the organization about the incident"},
+				Other: "This will create a new incident Slack channel, and notify {{.broadcastChannel}} about the incident"},
+			TemplateData: map[string]string{"broadcastChannel": fmt.Sprintf("<#%s>", h.opts.BroadcastChannelID)},
 		}), false, false)
 	contextBlock := slack.NewContextBlock("context", contextText)
 
@@ -341,7 +342,8 @@ func (h *botHandler) cmdResolveIncident(ctx context.Context, w http.ResponseWrit
 		h.opts.Localizer.MustLocalize(&i18n.LocalizeConfig{
 			DefaultMessage: &i18n.Message{
 				ID:    "ResolveIncidentDescription",
-				Other: "This will resolve an incident by archiving the incident slack channel and notify the organization about the resolution"},
+				Other: "This will resolve the chosen incident and notify {{.broadcastChannel}} about the resolution"},
+			TemplateData: map[string]string{"broadcastChannel": fmt.Sprintf("<#%s>", h.opts.BroadcastChannelID)},
 		}), false, false)
 	contextBlock := slack.NewContextBlock("context", contextText)
 

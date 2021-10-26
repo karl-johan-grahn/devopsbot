@@ -56,6 +56,14 @@ func (h *botHandler) handleInteractive(w http.ResponseWriter, r *http.Request) {
 					w.WriteHeader(http.StatusInternalServerError)
 					return
 				}
+			} else {
+				if uerr := h.updateView(ctx, payload, "incident_name", "declare_incident",
+					fmt.Sprintf("This will create this channel name: #%s", createChannelName(action.Value)), w); uerr != nil {
+					uerr = middleware.NewHTTPError(uerr, r)
+					log.Error().Err(uerr).Msg("updateView failed")
+					w.WriteHeader(http.StatusInternalServerError)
+					return
+				}
 			}
 		case "incident_channel":
 			channelID := action.SelectedConversation
@@ -336,17 +344,6 @@ func (h *botHandler) resolveIncident(ctx context.Context, payload *slack.Interac
 		incidentResolution: payload.View.State.Values["resolution"]["resolution"].Value,
 		incidentArchive:    payload.View.State.Values["archive_choice"]["archive_choice"].SelectedOption.Value == "Yes",
 		incidentResolver:   payload.User.ID,
-	}
-
-	// Invite devopsbot to broad cast channel so it is able to send messages there.
-	// If it is already in the channel, don't return the error, just continue.
-	authTestResp, _ := h.slackClient.AuthTestContext(ctx)
-	if _, err := h.slackClient.InviteUsersToConversationContext(ctx, h.opts.BroadcastChannelID, authTestResp.UserID); err != nil {
-		if err.Error() != alreadyInChannel {
-			return postErrorResponse(ctx, map[string]string{
-				"broadcast_channel": fmt.Sprintf("%s - %s", h.opts.BroadcastChannelID, err),
-			}, w)
-		}
 	}
 
 	if err := h.sendMessage(ctx, h.opts.BroadcastChannelID, slack.MsgOptionPostEphemeral(resolveParams.incidentResolver),
