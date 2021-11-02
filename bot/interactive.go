@@ -21,7 +21,7 @@ var incChannelNameRegex = regexp.MustCompile(`^inc_`)
 
 const (
 	alreadyInChannel   = "already_in_channel"
-	valIncChName       = "%s - channel name must be non-empty, and contain only lowercase letters, numbers, hyphens, and underscores"
+	valIncChName       = "\"%s\" - channel name must be non-empty, and contain only lowercase letters, numbers, hyphens, and underscores"
 	valChosenIncChName = "#%s does not seem to be an incident channel"
 )
 
@@ -419,7 +419,7 @@ func postErrorResponse(ctx context.Context, verr map[string]string, w http.Respo
 
 // createChannelName - create incident channel name based on input field
 func createChannelName(s string) string {
-	return fmt.Sprintf("inc_%s_%s", s, strings.ToLower(time.Now().Format("Jan_2")))
+	return fmt.Sprintf("inc_%s_%s", s, strings.ToLower(time.Now().Format("Jan2")))
 }
 
 // createUserFriendlyConversationError - Map https://api.slack.com/methods/conversations.create error codes to user friendly messages
