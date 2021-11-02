@@ -3,10 +3,6 @@
     "hash": "sha1-90cc2c32c36fce8cf288c6347d59c422aa62d3fa",
     "other": "Archiver la chaîne d'incident"
   },
-  "BroadcastChannel": {
-    "hash": "sha1-845a561e5462c72da21abaa141c66b897c0b4e8c",
-    "other": "Annoncer la chaîne"
-  },
   "Cancel": {
     "hash": "sha1-77dfd2135f4db726c47299bb55be26f7f4525a46",
     "other": "Annuler"
@@ -40,8 +36,8 @@
     "other": "Choisissez une chaîne qui commence avec 'inc_'"
   },
   "IncidentCreationDescription": {
-    "hash": "sha1-fbf76f73115aa59f83a7da722257d61e5d5bda92",
-    "other": "Cela va créer une chaîne #inc_&lt;Nom de l'incident&gt;_&lt;date&gt;, et annonce l'incident à l'organisation"
+    "hash": "sha1-29c1754abba841aa4a07cca37a2c1f1fe58191ee",
+    "other": "Cela va créer une chaîne incident et informer la chaîne {{.broadcastChannel}} de l'incident."
   },
   "IncidentName": {
     "hash": "sha1-d029d39391b470fedcf5f170ac381cdcf2156641",
@@ -76,8 +72,8 @@
     "other": "Résoudre un incident"
   },
   "ResolveIncidentDescription": {
-    "hash": "sha1-59a43fd500805238033d358abc53a561bf0c7348",
-    "other": "Cela va résoudre un incident en archivant automatiquement la chaîne incident et informer la résolutions à l'organisation"
+    "hash": "sha1-23e29436103440626de04e77052badf99abfc6b3",
+    "other": "Cela va résoudre l'incident choisi et informer la chaîne {{.broadcastChannel}} de l'incident."
   },
   "Responder": {
     "hash": "sha1-20c9b55802cc9b2886ed7be49e5374d7f8663e9e",
