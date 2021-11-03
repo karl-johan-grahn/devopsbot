@@ -168,7 +168,7 @@ func (h *botHandler) cmdIncident(ctx context.Context, w http.ResponseWriter, cmd
 		h.opts.Localizer.MustLocalize(&i18n.LocalizeConfig{
 			DefaultMessage: &i18n.Message{
 				ID:    "IncidentCreationDescription",
-				Other: "This will create a new incident Slack channel, and notify {{.broadcastChannel}} about the incident"},
+				Other: "This will create a new incident Slack channel, and notify {{.broadcastChannel}} about the incident. This incident response system is based on the Incident Command System (ICS)."},
 			TemplateData: map[string]string{"broadcastChannel": fmt.Sprintf("<#%s>", h.opts.BroadcastChannelID)},
 		}), false, false)
 	contextBlock := slack.NewContextBlock("context", contextText)
@@ -217,6 +217,12 @@ func (h *botHandler) cmdIncident(ctx context.Context, w http.ResponseWriter, cmd
 		}), false, false)
 	responderOption := slack.NewOptionsSelectBlockElement(slack.OptTypeUser, responderText, "incident_responder")
 	responderBlock := slack.NewInputBlock("incident_responder", responderText, responderOption)
+	responderBlock.Hint = slack.NewTextBlockObject(slack.PlainTextType,
+		h.opts.Localizer.MustLocalize(&i18n.LocalizeConfig{
+			DefaultMessage: &i18n.Message{
+				ID:    "ResponderHint",
+				Other: "The responder leads the work of resolving the incident"},
+		}), false, false)
 
 	commanderText := slack.NewTextBlockObject(slack.PlainTextType,
 		h.opts.Localizer.MustLocalize(&i18n.LocalizeConfig{
@@ -226,6 +232,12 @@ func (h *botHandler) cmdIncident(ctx context.Context, w http.ResponseWriter, cmd
 		}), false, false)
 	commanderOption := slack.NewOptionsSelectBlockElement(slack.OptTypeUser, commanderText, "incident_commander")
 	commanderBlock := slack.NewInputBlock("incident_commander", commanderText, commanderOption)
+	commanderBlock.Hint = slack.NewTextBlockObject(slack.PlainTextType,
+		h.opts.Localizer.MustLocalize(&i18n.LocalizeConfig{
+			DefaultMessage: &i18n.Message{
+				ID:    "CommanderHint",
+				Other: "The incident commander coordinates, communicates, and controls the response"},
+		}), false, false)
 
 	envTxt := slack.NewTextBlockObject(slack.PlainTextType,
 		h.opts.Localizer.MustLocalize(&i18n.LocalizeConfig{
@@ -262,8 +274,8 @@ func (h *botHandler) cmdIncident(ctx context.Context, w http.ResponseWriter, cmd
 	summaryText := slack.NewTextBlockObject(slack.PlainTextType,
 		h.opts.Localizer.MustLocalize(&i18n.LocalizeConfig{
 			DefaultMessage: &i18n.Message{
-				ID:    "Summary",
-				Other: "Summary"},
+				ID:    "IncidentSummary",
+				Other: "Incident summary"},
 		}), false, false)
 	summaryElement := slack.NewPlainTextInputBlockElement(summaryText, "incident_summary")
 	// Set an arbitrary max length to avoid prose summary

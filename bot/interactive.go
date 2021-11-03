@@ -204,6 +204,8 @@ func (h *botHandler) declareIncident(ctx context.Context, payload *slack.Interac
 		incidentSummary:              payload.View.State.Values["incident_summary"]["incident_summary"].Value,
 		incidentDeclarer:             payload.User.ID,
 	}
+	// Add incident responder and incident commander to the people to be invited to the incident channel
+	inputParams.incidentInvitees = append(inputParams.incidentInvitees, inputParams.incidentResponder, inputParams.incidentCommander)
 
 	// Create channel - should be done here because it will update the modal if there are errors
 	incidentChannel, err := h.slackClient.CreateConversationContext(ctx, incidentChannelName, inputParams.incidentSecurityRelated)
@@ -214,11 +216,6 @@ func (h *botHandler) declareIncident(ctx context.Context, payload *slack.Interac
 		}, w)
 	}
 
-	if err := h.sendMessage(ctx, h.opts.BroadcastChannelID, slack.MsgOptionPostEphemeral(inputParams.incidentDeclarer),
-		slack.MsgOptionText(fmt.Sprintf("Started work on declaring the incident <#%s>", incidentChannel.ID), false)); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return err
-	}
 	w.WriteHeader(http.StatusAccepted)
 
 	// Do the rest via goroutine
@@ -239,15 +236,17 @@ func (h *botHandler) doIncidentTasks(ctx context.Context, params *inputParams, i
 		securityMessage = ""
 	}
 	// Set channel purpose and topic
-	overview := fmt.Sprintf("*Summary:* %s\n"+
+	overview := fmt.Sprintf("*Incident channel*\n"+
+	  "*Incident summary:* %s\n"+
 		"*Environment affected:* %s\n"+
 		"*Region affected:* %s\n"+
 		"*Responder:* <@%s>\n"+
-		"*Commander:* <@%s>\n\n"+
+		"*Commander:* <@%s>\n"+
+		"*Broadcast channel:* <#%s>\n\n"+
 		"Declared by: <@%s>\n"+
 		securityMessage,
 		params.incidentSummary, params.incidentEnvironmentsAffected, params.incidentRegionsAffected,
-		params.incidentResponder, params.incidentCommander, params.incidentDeclarer)
+		params.incidentResponder, params.incidentCommander, h.opts.BroadcastChannelID, params.incidentDeclarer)
 	if _, err := h.slackClient.SetPurposeOfConversationContext(ctx, incidentChannel.ID, overview); err != nil {
 		if sendErr := h.sendMessage(ctx, h.opts.BroadcastChannelID, slack.MsgOptionPostEphemeral(params.incidentDeclarer),
 			slack.MsgOptionText(fmt.Sprintf("Failed to set purpose for incident channel: %s", err.Error()), false)); sendErr != nil {
@@ -276,7 +275,7 @@ func (h *botHandler) doIncidentTasks(ctx context.Context, params *inputParams, i
 	// Inform about incident
 	if err := h.sendMessage(ctx, h.opts.BroadcastChannelID,
 		slack.MsgOptionText(fmt.Sprintf(":rotating_siren: An incident has been declared by <@%s>\n"+
-			"*Summary:* %s\n"+
+			"*Incident summary:* %s\n"+
 			"*Environment affected:* %s\n"+
 			"*Region affected:* %s\n"+
 			"*Responder:* <@%s>\n"+
@@ -289,29 +288,24 @@ func (h *botHandler) doIncidentTasks(ctx context.Context, params *inputParams, i
 		log.Error().Err(err).Msg(sendError)
 		return
 	}
-	// Send message about starting slack call
+	// Send message about starting a video call for live troubleshooting
 	if err := h.sendMessage(ctx, incidentChannel.ID,
-		slack.MsgOptionText(fmt.Sprintf("IC <@%s>: Start a Teams call with the command `/teams-calls meeting %s`", params.incidentCommander, params.incidentChannelName), false)); err != nil {
+		slack.MsgOptionText(fmt.Sprintf("IC <@%s>: Start an incident Teams call with the command `/teams-calls meeting %s` and invite the appropriate people", params.incidentCommander, params.incidentChannelName), false)); err != nil {
 		log.Error().Err(err).Msg(sendError)
 		return
 	}
-	// Send message about starting incident doc
+	// Send message about starting an incident document for postmortem
 	if err := h.sendMessage(ctx, incidentChannel.ID,
-		slack.MsgOptionText(fmt.Sprintf("IC <@%s>: Start the incident doc by using [this template](%s)", params.incidentCommander, h.opts.IncidentDocTemplateURL), false)); err != nil {
+		slack.MsgOptionText(fmt.Sprintf("IC <@%s>: Start the incident document by using <%s|this template>", params.incidentCommander, h.opts.IncidentDocTemplateURL), false)); err != nil {
 		log.Error().Err(err).Msg(sendError)
 		return
 	}
 	// Add channel reminder about updating about progress
+	// TODO: Why is this not working? Getting not_allowed_token_type, "Could not send failure message"
 	if _, err := h.slackClient.AddChannelReminder(
 		incidentChannel.ID,
 		fmt.Sprintf("Reminder for IC <@%s>: Update progress about the incident in <#%s>", params.incidentCommander, h.opts.BroadcastChannelID),
 		"Every 30 min"); err != nil {
-		log.Error().Err(err).Msg(sendError)
-		return
-	}
-	// Inform about being done with declaring incident
-	if err := h.sendMessage(ctx, h.opts.BroadcastChannelID, slack.MsgOptionPostEphemeral(params.incidentDeclarer),
-		slack.MsgOptionText(fmt.Sprintf("Finished declaring the incident %s", params.incidentChannelName), false)); err != nil {
 		log.Error().Err(err).Msg(sendError)
 		return
 	}
@@ -346,11 +340,6 @@ func (h *botHandler) resolveIncident(ctx context.Context, payload *slack.Interac
 		incidentResolver:   payload.User.ID,
 	}
 
-	if err := h.sendMessage(ctx, h.opts.BroadcastChannelID, slack.MsgOptionPostEphemeral(resolveParams.incidentResolver),
-		slack.MsgOptionText(fmt.Sprintf("Started work on resolving the incident <#%s>", incChannel.Name), false)); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return err
-	}
 	w.WriteHeader(http.StatusAccepted)
 
 	// Do the rest via goroutine
@@ -376,12 +365,6 @@ func (h *botHandler) doResolveTasks(ctx context.Context, params *resolveParams) 
 			log.Error().Err(err).Msg(sendError)
 			return
 		}
-	}
-	// Inform about being done with declaring incident
-	if err := h.sendMessage(ctx, h.opts.BroadcastChannelID, slack.MsgOptionPostEphemeral(params.incidentResolver),
-		slack.MsgOptionText(fmt.Sprintf("Finished resolving the incident <#%s>", params.incidentChannel), false)); err != nil {
-		log.Error().Err(err).Msg(sendError)
-		return
 	}
 }
 
