@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.10.0] - 2021-11-03
 ### Updates
-- Update wording, add hints for responder and commander,
+- Update UI such as update wording, add hints for responder and commander
 
 ## [0.9.0] - 2021-11-02
 ### Updates

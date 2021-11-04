@@ -237,7 +237,7 @@ func (h *botHandler) doIncidentTasks(ctx context.Context, params *inputParams, i
 	}
 	// Set channel purpose and topic
 	overview := fmt.Sprintf("*Incident channel*\n"+
-	  "*Incident summary:* %s\n"+
+		"*Incident summary:* %s\n"+
 		"*Environment affected:* %s\n"+
 		"*Region affected:* %s\n"+
 		"*Responder:* <@%s>\n"+
@@ -300,14 +300,15 @@ func (h *botHandler) doIncidentTasks(ctx context.Context, params *inputParams, i
 		log.Error().Err(err).Msg(sendError)
 		return
 	}
-	// Add channel reminder about updating about progress
-	// TODO: Why is this not working? Getting not_allowed_token_type, "Could not send failure message"
-	if _, err := h.slackClient.AddChannelReminder(
-		incidentChannel.ID,
+	// Add channel reminder about updating progress
+	if _, err := h.slackClient.AddChannelReminder(incidentChannel.ID,
 		fmt.Sprintf("Reminder for IC <@%s>: Update progress about the incident in <#%s>", params.incidentCommander, h.opts.BroadcastChannelID),
 		"Every 30 min"); err != nil {
-		log.Error().Err(err).Msg(sendError)
-		return
+		if sendErr := h.sendMessage(ctx, incidentChannel.ID, slack.MsgOptionPostEphemeral(params.incidentDeclarer),
+			slack.MsgOptionText(fmt.Sprintf("Failed to add channel reminder: %s", err.Error()), false)); sendErr != nil {
+			log.Error().Err(sendErr).Msg(sendError)
+			return
+		}
 	}
 }
 
@@ -351,18 +352,17 @@ func (h *botHandler) resolveIncident(ctx context.Context, payload *slack.Interac
 
 func (h *botHandler) doResolveTasks(ctx context.Context, params *resolveParams) {
 	log := zerolog.Ctx(ctx)
-	const sendError = "Could not send failure message"
 	// Inform about resolution
 	if err := h.sendMessage(ctx, h.opts.BroadcastChannelID,
 		slack.MsgOptionText(fmt.Sprintf(":white_check_mark: The incident <#%s> has been resolved!\n"+
 			"*Resolution:* %s",
 			params.incidentChannel, params.incidentResolution), false)); err != nil {
-		log.Error().Err(err).Msg(sendError)
+		log.Error().Err(err).Msg("Could not send failure message")
 		return
 	}
 	if params.incidentArchive {
 		if err := h.slackClient.ArchiveConversationContext(ctx, params.incidentChannel); err != nil {
-			log.Error().Err(err).Msg(sendError)
+			log.Error().Err(err).Msg("Could not archive channel")
 			return
 		}
 	}
