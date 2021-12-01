@@ -20,4 +20,6 @@ type SlackClient interface {
 	InviteUsersToConversationContext(ctx context.Context, channelID string, users ...string) (*slack.Channel, error)
 	AddChannelReminder(channelID string, text string, time string) (*slack.Reminder, error)
 	GetUserInfoContext(ctx context.Context, user string) (*slack.User, error)
+	AuthTestContext(ctx context.Context) (*slack.AuthTestResponse, error)
+	GetConversationsForUserContext(ctx context.Context, params *slack.GetConversationsForUserParameters) ([]slack.Channel, string, error)
 }

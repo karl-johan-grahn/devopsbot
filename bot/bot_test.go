@@ -152,6 +152,8 @@ type dummyClient struct {
 	Reminder         *slack.Reminder
 	AuthTestResponse *slack.AuthTestResponse
 	User             *slack.User
+	Channels         []slack.Channel
+	NextCursor       string
 }
 
 var _ SlackClient = &dummyClient{}
@@ -203,4 +205,12 @@ func (c *dummyClient) AddChannelReminder(channelID string, text string, time str
 
 func (c *dummyClient) GetUserInfoContext(ctx context.Context, user string) (*slack.User, error) {
 	return c.User, c.err
+}
+
+func (c *dummyClient) AuthTestContext(ctx context.Context) (*slack.AuthTestResponse, error) {
+	return c.AuthTestResponse, c.err
+}
+
+func (c *dummyClient) GetConversationsForUserContext(ctx context.Context, params *slack.GetConversationsForUserParameters) ([]slack.Channel, string, error) {
+	return c.Channels, c.NextCursor, c.err
 }

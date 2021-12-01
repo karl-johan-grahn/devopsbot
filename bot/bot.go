@@ -30,6 +30,8 @@ type ugMembers struct {
 }
 
 type Opts struct {
+	// UserAccessToken - the Slack user access token
+	UserAccessToken string
 	// SigningSecret - the signing secret from the Slack app config
 	SigningSecret string
 	// BroadcastChannelID - the ID of the Slack channel the bot will broadcast in
@@ -173,6 +175,39 @@ func (h *botHandler) cmdIncident(ctx context.Context, w http.ResponseWriter, cmd
 		}), false, false)
 	contextBlock := slack.NewContextBlock("context", contextText)
 
+	broadcastChLabel := slack.NewTextBlockObject(slack.PlainTextType,
+		h.opts.Localizer.MustLocalize(&i18n.LocalizeConfig{
+			DefaultMessage: &i18n.Message{
+				ID:    "BroadcastChannel",
+				Other: "Broadcast channel"},
+		}), false, false)
+	// TODO: Only get one page of results for now, implement pagination if needed
+	authTestResp, _ := h.slackClient.AuthTestContext(ctx)
+	channels, _, err := h.slackClient.GetConversationsForUserContext(ctx, &slack.GetConversationsForUserParameters{
+		UserID:          authTestResp.UserID,
+		Limit:           100,
+		ExcludeArchived: true,
+	})
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to get conversations for bot")
+		w.WriteHeader(http.StatusInternalServerError)
+		return err
+	}
+	channelIDs := []string{}
+	for i := range channels {
+		channelIDs = append(channelIDs, channels[i].ID)
+	}
+	botChannels := createOptionBlockObjects(channelIDs, true)
+	broadcastChOption := slack.NewOptionsSelectBlockElement(slack.OptTypeStatic, nil, "botChannels", botChannels...)
+	broadcastChOption.InitialConversation = h.opts.BroadcastChannelID
+	broadcastChBlock := slack.NewInputBlock("broadcast_channel", broadcastChLabel, broadcastChOption)
+	broadcastChBlock.Hint = slack.NewTextBlockObject(slack.PlainTextType,
+		h.opts.Localizer.MustLocalize(&i18n.LocalizeConfig{
+			DefaultMessage: &i18n.Message{
+				ID:    "BroadcastChannelHint",
+				Other: "DevOpsBot need to already be a member of the channel to be able to choose it"},
+		}), false, false)
+
 	// Only the inputs in input blocks will be included in view_submission’s view.state.values: https://slack.dev/java-slack-sdk/guides/modals
 	incidentNameText := slack.NewTextBlockObject(slack.PlainTextType,
 		h.opts.Localizer.MustLocalize(&i18n.LocalizeConfig{
@@ -183,6 +218,9 @@ func (h *botHandler) cmdIncident(ctx context.Context, w http.ResponseWriter, cmd
 	incidentNameElement := slack.NewPlainTextInputBlockElement(incidentNameText, "incident_name")
 	// Name will be prefixed with "inc_" and postfixed with "_<date>" so keep it shorter than the maximum 80 characters
 	incidentNameElement.MaxLength = 60
+	incidentNameElement.DispatchActionConfig = &slack.DispatchActionConfig{
+		TriggerActionsOn: []string{"on_character_entered"},
+	}
 	incidentNameBlock := slack.NewInputBlock("incident_name", incidentNameText, incidentNameElement)
 	incidentNameBlock.DispatchAction = true
 	incidentNameBlock.Hint = slack.NewTextBlockObject(slack.PlainTextType,
@@ -296,6 +334,7 @@ func (h *botHandler) cmdIncident(ctx context.Context, w http.ResponseWriter, cmd
 	blocks := slack.Blocks{
 		BlockSet: []slack.Block{
 			contextBlock,
+			broadcastChBlock,
 			incidentNameBlock,
 			securityBlock,
 			responderBlock,
@@ -316,7 +355,7 @@ func (h *botHandler) cmdIncident(ctx context.Context, w http.ResponseWriter, cmd
 	modalVReq.ClearOnClose = true
 	modalVReq.CallbackID = "declare_incident"
 
-	_, err := h.slackClient.OpenViewContext(ctx, cmd.TriggerID, modalVReq)
+	_, err = h.slackClient.OpenViewContext(ctx, cmd.TriggerID, modalVReq)
 	if err != nil {
 		log.Error().Err(err).Msg("Error opening view")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -358,6 +397,8 @@ func (h *botHandler) cmdResolveIncident(ctx context.Context, w http.ResponseWrit
 			TemplateData: map[string]string{"broadcastChannel": fmt.Sprintf("<#%s>", h.opts.BroadcastChannelID)},
 		}), false, false)
 	contextBlock := slack.NewContextBlock("context", contextText)
+
+	// TODO: Copy br from above
 
 	incChanText := slack.NewTextBlockObject(slack.PlainTextType,
 		h.opts.Localizer.MustLocalize(&i18n.LocalizeConfig{
@@ -415,6 +456,7 @@ func (h *botHandler) cmdResolveIncident(ctx context.Context, w http.ResponseWrit
 	blocks := slack.Blocks{
 		BlockSet: []slack.Block{
 			contextBlock,
+			// broadcastChBlock,
 			incChanBlock,
 			archiveBlock,
 			resolutionBlock,
