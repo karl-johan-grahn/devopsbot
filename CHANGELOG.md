@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.12.0] - 2021-11-29
 ### Adds
-- Add broadcast channel as input option, add dispatch action when characters are entered
+- Add broadcast channel as input option, add dispatch action when characters are entered, update to Slack Go API v0.10.0
 
 ## [0.11.0] - 2021-11-16
 ### Updates
