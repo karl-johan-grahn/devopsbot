@@ -195,7 +195,7 @@ func (h *botHandler) declareIncident(ctx context.Context, payload *slack.Interac
 		incidentRegionsAffected[i] = r.Value
 	}
 	inputParams := &inputParams{
-		broadcastChannel:             payload.View.State.Values["broadcast_channel"]["broadcast_channel"].SelectedConversation,
+		broadcastChannel:             payload.View.State.Values["broadcast_channel"]["broadcast_channel"].SelectedOption.Value,
 		incidentChannelName:          incidentChannelName,
 		incidentSecurityRelated:      payload.View.State.Values["security_incident"]["security_incident"].SelectedOption.Value == "yes",
 		incidentResponder:            payload.View.State.Values["incident_responder"]["incident_responder"].SelectedUser,
@@ -341,7 +341,7 @@ func (h *botHandler) resolveIncident(ctx context.Context, payload *slack.Interac
 		return err
 	}
 	resolveParams := &resolveParams{
-		broadcastChannel:   payload.View.State.Values["broadcast_channel"]["broadcast_channel"].SelectedConversation,
+		broadcastChannel:   payload.View.State.Values["broadcast_channel"]["broadcast_channel"].SelectedOption.Value,
 		incidentChannel:    incidentChannelID,
 		incidentResolution: payload.View.State.Values["resolution"]["resolution"].Value,
 		incidentArchive:    payload.View.State.Values["archive_choice"]["archive_choice"].SelectedOption.Value == "Yes",

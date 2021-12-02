@@ -214,7 +214,7 @@ func (h *botHandler) cmdIncident(ctx context.Context, w http.ResponseWriter, cmd
 		h.opts.Localizer.MustLocalize(&i18n.LocalizeConfig{
 			DefaultMessage: &i18n.Message{
 				ID:    "BroadcastChannelHint",
-				Other: "If a channel is missing, first add DevOpsBot as a member to it"},
+				Other: "The channels listed are the ones that the bot has been added to as a user"},
 		}), false, false)
 
 	// Only the inputs in input blocks will be included in view_submission’s view.state.values: https://slack.dev/java-slack-sdk/guides/modals
@@ -402,7 +402,7 @@ func (h *botHandler) cmdResolveIncident(ctx context.Context, w http.ResponseWrit
 		h.opts.Localizer.MustLocalize(&i18n.LocalizeConfig{
 			DefaultMessage: &i18n.Message{
 				ID:    "ResolveIncidentDescription",
-				Other: "This will resolve the chosen incident and notify {{.broadcastChannel}} about the resolution"},
+				Other: "This will resolve an incident and notify about the resolution in a broadcast channel"},
 			TemplateData: map[string]string{"broadcastChannel": fmt.Sprintf("<#%s>", h.opts.BroadcastChannelID)},
 		}), false, false)
 	contextBlock := slack.NewContextBlock("context", contextText)
@@ -446,7 +446,7 @@ func (h *botHandler) cmdResolveIncident(ctx context.Context, w http.ResponseWrit
 		h.opts.Localizer.MustLocalize(&i18n.LocalizeConfig{
 			DefaultMessage: &i18n.Message{
 				ID:    "BroadcastChannelHint",
-				Other: "If a channel is missing, first add DevOpsBot as a member to it"},
+				Other: "The channels listed are the ones that the bot has been added to as a user"},
 		}), false, false)
 
 	incChanText := slack.NewTextBlockObject(slack.PlainTextType,
