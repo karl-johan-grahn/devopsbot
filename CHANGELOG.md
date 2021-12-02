@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.12.0] - 2021-11-29
 ### Adds
-- Add broadcast channel as input option
+- Add broadcast channel as input option, add dispatch action when characters are entered
 
 ## [0.11.0] - 2021-11-16
 ### Updates
