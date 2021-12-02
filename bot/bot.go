@@ -182,31 +182,32 @@ func (h *botHandler) cmdIncident(ctx context.Context, w http.ResponseWriter, cmd
 				Other: "Broadcast channel"},
 		}), false, false)
 	// TODO: Only get one page of results for now, implement pagination if needed
-	authTestResp, _ := h.slackClient.AuthTestContext(ctx)
-	channels, _, err := h.slackClient.GetConversationsForUserContext(ctx, &slack.GetConversationsForUserParameters{
-		UserID:          authTestResp.UserID,
-		Limit:           100,
-		ExcludeArchived: true,
-	})
-	if err != nil {
-		log.Error().Err(err).Msg("Failed to get conversations for bot")
-		w.WriteHeader(http.StatusInternalServerError)
-		return err
-	}
-	channelIDs := []string{}
-	for i := range channels {
-		channelIDs = append(channelIDs, channels[i].ID)
-	}
-	botChannels := createOptionBlockObjects(channelIDs, true)
+	// authTestResp, _ := h.slackClient.AuthTestContext(ctx)
+	// channels, _, err := h.slackClient.GetConversationsForUserContext(ctx, &slack.GetConversationsForUserParameters{
+	// 	UserID:          authTestResp.UserID,
+	// 	Limit:           100,
+	// 	ExcludeArchived: true,
+	// })
+	// if err != nil {
+	// 	log.Error().Err(err).Msg("Failed to get conversations for bot")
+	// 	w.WriteHeader(http.StatusInternalServerError)
+	// 	return err
+	// }
+	// channelIDs := []string{}
+	// for i := range channels {
+	// 	channelIDs = append(channelIDs, channels[i].ID)
+	// }
+	// botChannels := createOptionBlockObjects(channelIDs, false)
+	botChannels := createOptionBlockObjects([]string{"C016NTQLJUT", "C02FV81B31U", "C024BASUP0X"}, false)
 	broadcastChOption := slack.NewOptionsSelectBlockElement(slack.OptTypeStatic, nil, "botChannels", botChannels...)
-	broadcastChOption.InitialConversation = h.opts.BroadcastChannelID
+	// broadcastChOption.InitialConversation = h.opts.BroadcastChannelID
 	broadcastChBlock := slack.NewInputBlock("broadcast_channel", broadcastChLabel, broadcastChOption)
-	broadcastChBlock.Hint = slack.NewTextBlockObject(slack.PlainTextType,
-		h.opts.Localizer.MustLocalize(&i18n.LocalizeConfig{
-			DefaultMessage: &i18n.Message{
-				ID:    "BroadcastChannelHint",
-				Other: "DevOpsBot need to already be a member of the channel to be able to choose it"},
-		}), false, false)
+	// broadcastChBlock.Hint = slack.NewTextBlockObject(slack.PlainTextType,
+	// 	h.opts.Localizer.MustLocalize(&i18n.LocalizeConfig{
+	// 		DefaultMessage: &i18n.Message{
+	// 			ID:    "BroadcastChannelHint",
+	// 			Other: "DevOpsBot need to already be a member of the channel to be able to choose it"},
+	// 	}), false, false)
 
 	// Only the inputs in input blocks will be included in view_submission’s view.state.values: https://slack.dev/java-slack-sdk/guides/modals
 	incidentNameText := slack.NewTextBlockObject(slack.PlainTextType,
@@ -355,7 +356,7 @@ func (h *botHandler) cmdIncident(ctx context.Context, w http.ResponseWriter, cmd
 	modalVReq.ClearOnClose = true
 	modalVReq.CallbackID = "declare_incident"
 
-	_, err = h.slackClient.OpenViewContext(ctx, cmd.TriggerID, modalVReq)
+	_, err := h.slackClient.OpenViewContext(ctx, cmd.TriggerID, modalVReq)
 	if err != nil {
 		log.Error().Err(err).Msg("Error opening view")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -488,6 +489,7 @@ func createOptionBlockObjects(options []string, users bool) []*slack.OptionBlock
 	optionBlockObjects := make([]*slack.OptionBlockObject, 0, len(options))
 	var text string
 	for _, o := range options {
+		// TODO: use type instead of just users to trigger on channels as well
 		if users {
 			text = fmt.Sprintf("<@%s>", o)
 		} else {

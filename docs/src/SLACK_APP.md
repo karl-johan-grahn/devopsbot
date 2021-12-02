@@ -24,6 +24,8 @@ features:
       should_escape: false
 oauth_config:
   scopes:
+    user:
+      - reminders:write
     bot:
       - channels:manage
       - channels:read
@@ -34,6 +36,7 @@ oauth_config:
       - groups:write
       - im:read
       - im:write
+      - incoming-webhook
       - mpim:read
       - mpim:write
       - users:read
