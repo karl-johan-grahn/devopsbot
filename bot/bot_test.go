@@ -126,11 +126,11 @@ func TestHandleCommand(t *testing.T) {
 
 func TestCreateOptionBlockObjects(t *testing.T) {
 	options := []string{}
-	optionBlockObjects := createOptionBlockObjects(options, false)
+	optionBlockObjects := createOptionBlockObjects(options)
 	assert.Empty(t, optionBlockObjects)
 
 	options = []string{"a", "b"}
-	optionBlockObjects = createOptionBlockObjects(options, false)
+	optionBlockObjects = createOptionBlockObjects(options)
 	assert.Equal(t, []*slack.OptionBlockObject{
 		(&slack.OptionBlockObject{
 			Text:  &slack.TextBlockObject{Type: "plain_text", Text: "a", Emoji: false, Verbatim: false},
