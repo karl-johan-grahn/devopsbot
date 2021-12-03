@@ -6,7 +6,7 @@ COPY . ./
 
 RUN make build
 
-FROM alpine:3.14.2
+FROM alpine:3.15.0
 
 RUN apk add --no-cache ca-certificates=20191127-r5
 
