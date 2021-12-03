@@ -415,7 +415,7 @@ func createChannelName(s string) string {
 // createUserFriendlyConversationError - Map https://api.slack.com/methods/conversations.create error codes to user friendly messages
 func createUserFriendlyConversationError(err error) error {
 	if err.Error() == "name_taken" {
-		return fmt.Errorf("This channel already exists")
+		return fmt.Errorf("this channel already exists")
 	}
 	return err
 }
