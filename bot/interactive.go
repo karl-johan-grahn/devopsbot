@@ -214,7 +214,7 @@ func (h *botHandler) declareIncident(ctx context.Context, payload *slack.Interac
 	if err != nil {
 		errorMessage := createUserFriendlyConversationError(err)
 		return postErrorResponse(ctx, map[string]string{
-			"incident_name": fmt.Sprintf("%s - %s", incidentChannelName, errorMessage),
+			"incident_name": fmt.Sprintf("%s: <#%s>", errorMessage, incidentChannelName),
 		}, w)
 	}
 
@@ -415,7 +415,7 @@ func createChannelName(s string) string {
 // createUserFriendlyConversationError - Map https://api.slack.com/methods/conversations.create error codes to user friendly messages
 func createUserFriendlyConversationError(err error) error {
 	if err.Error() == "name_taken" {
-		return fmt.Errorf("channel with given name already exists: %w", err)
+		return fmt.Errorf("This channel already exists")
 	}
 	return err
 }

@@ -204,7 +204,7 @@ func (h *botHandler) cmdIncident(ctx context.Context, w http.ResponseWriter, cmd
 		channelIDs = append(channelIDs, fmt.Sprintf("<#%s>", channels[i].ID))
 	}
 	botChannels := createOptionBlockObjects(channelIDs)
-	broadcastChOption := slack.NewOptionsSelectBlockElement(slack.OptTypeStatic, nil, "botChannels", botChannels...)
+	broadcastChOption := slack.NewOptionsSelectBlockElement(slack.OptTypeStatic, nil, "broadcast_channel", botChannels...)
 	initialChannel := fmt.Sprintf("<#%s>", h.opts.BroadcastChannelID)
 	initialChannelLabel := slack.NewTextBlockObject(slack.PlainTextType, initialChannel, false, false)
 	initialChannelOptionBlockObject := slack.NewOptionBlockObject(initialChannel, initialChannelLabel, nil)
@@ -436,7 +436,7 @@ func (h *botHandler) cmdResolveIncident(ctx context.Context, w http.ResponseWrit
 		channelIDs = append(channelIDs, fmt.Sprintf("<#%s>", channels[i].ID))
 	}
 	botChannels := createOptionBlockObjects(channelIDs)
-	broadcastChOption := slack.NewOptionsSelectBlockElement(slack.OptTypeStatic, nil, "botChannels", botChannels...)
+	broadcastChOption := slack.NewOptionsSelectBlockElement(slack.OptTypeStatic, nil, "broadcast_channel", botChannels...)
 	initialChannel := fmt.Sprintf("<#%s>", h.opts.BroadcastChannelID)
 	initialChannelLabel := slack.NewTextBlockObject(slack.PlainTextType, initialChannel, false, false)
 	initialChannelOptionBlockObject := slack.NewOptionBlockObject(initialChannel, initialChannelLabel, nil)
