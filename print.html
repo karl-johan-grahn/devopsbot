@@ -272,10 +272,15 @@ spec:
             periodSeconds: 3
             failureThreshold: 2
           env:
-            - name: slack.accessToken
+            - name: slack.botAccessToken
               valueFrom:
                 secretKeyRef:
-                  key: slack.accessToken
+                  key: slack.botAccessToken
+                  name: app-secrets
+            - name: slack.userAccessToken
+              valueFrom:
+                secretKeyRef:
+                  key: slack.userAccessToken
                   name: app-secrets
             - name: slack.adminGroupID
               valueFrom:
@@ -360,7 +365,7 @@ $ sudo echo &quot;127.0.0.1 devopsbot&quot; &gt;&gt; /etc/hosts
 <p>Then, run a local copy after having provided values for parameters
 that are empty by default:</p>
 <pre><code class="language-console">$ bin/devopsbot \
-  --slack.accessToken=xoxb-.... \
+  --slack.botAccessToken=xoxb-.... \
   --slack.signingSecret=...
 </code></pre>
 <p>And access it at <a href="https://devopsbot:3443">https://devopsbot:3443</a> or <a href="http://devopsbot:3333">http://devopsbot:3333</a>.</p>
@@ -460,16 +465,7 @@ features:
 oauth_config:
   scopes:
     user:
-      - channels:read
-      - channels:write
-      - groups:read
-      - groups:write
-      - im:read
-      - im:write
-      - mpim:read
-      - mpim:write
       - reminders:write
-      - users:read
     bot:
       - channels:manage
       - channels:read
@@ -480,6 +476,7 @@ oauth_config:
       - groups:write
       - im:read
       - im:write
+      - incoming-webhook
       - mpim:read
       - mpim:write
       - users:read
