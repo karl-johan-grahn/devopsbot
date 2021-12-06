@@ -8,10 +8,11 @@ type Config struct {
 	// the prometheus namespace
 	NS string
 
-	SlackAccessToken   string
-	SlackSigningSecret string
-	SlackAdminGroupID  string
-	BroadcastChannelID string
+	SlackBotAccessToken  string
+	SlackUserAccessToken string
+	SlackSigningSecret   string
+	SlackAdminGroupID    string
+	BroadcastChannelID   string
 
 	Addr    string
 	TLSAddr string
@@ -28,7 +29,8 @@ func FromViper(v *viper.Viper) (Config, error) {
 
 	c.NS = v.GetString("server.prometheusNamespace")
 
-	c.SlackAccessToken = v.GetString("slack.accessToken")
+	c.SlackBotAccessToken = v.GetString("slack.botAccessToken")
+	c.SlackUserAccessToken = v.GetString("slack.userAccessToken")
 	c.SlackSigningSecret = v.GetString("slack.signingSecret")
 	c.SlackAdminGroupID = v.GetString("slack.adminGroupID")
 	c.BroadcastChannelID = v.GetString("slack.broadcastChannelID")

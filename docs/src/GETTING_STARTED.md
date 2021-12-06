@@ -149,10 +149,15 @@ spec:
             periodSeconds: 3
             failureThreshold: 2
           env:
-            - name: slack.accessToken
+            - name: slack.botAccessToken
               valueFrom:
                 secretKeyRef:
-                  key: slack.accessToken
+                  key: slack.botAccessToken
+                  name: app-secrets
+            - name: slack.userAccessToken
+              valueFrom:
+                secretKeyRef:
+                  key: slack.userAccessToken
                   name: app-secrets
             - name: slack.adminGroupID
               valueFrom:
@@ -243,7 +248,7 @@ that are empty by default:
 
 ```console
 $ bin/devopsbot \
-  --slack.accessToken=xoxb-.... \
+  --slack.botAccessToken=xoxb-.... \
   --slack.signingSecret=...
 ```
 

@@ -5,6 +5,8 @@ SHELL := /bin/bash
 
 export GOPRIVATE=github.com/karl-johan-grahn/devopsbot
 
+PODMAN?=0
+
 REVISION = $(shell git rev-parse --short HEAD)
 VERSION = $(shell cat version.txt)
 
@@ -15,11 +17,17 @@ VERSION_FLAG = -X $(shell go list ./version).Version=$(VERSION)
 GOOS ?= $(shell go version | sed 's/^.*\ \([a-z0-9]*\)\/\([a-z0-9]*\)/\1/')
 GOARCH ?= $(shell go version | sed 's/^.*\ \([a-z0-9]*\)\/\([a-z0-9]*\)/\2/')
 
+ifeq ($(PODMAN), 1)
+	docker=podman
+else
+	docker=docker
+endif
+
 version.txt:
 	@./gen_version.sh > $@
 
 image.iid: version.txt Dockerfile
-	@docker build \
+	@$(docker) build \
 	--build-arg REVISION=$(REVISION) \
 	--build-arg VERSION=$(VERSION) \
 	--iidfile $@ \

@@ -126,11 +126,11 @@ func TestHandleCommand(t *testing.T) {
 
 func TestCreateOptionBlockObjects(t *testing.T) {
 	options := []string{}
-	optionBlockObjects := createOptionBlockObjects(options, false)
+	optionBlockObjects := createOptionBlockObjects(options)
 	assert.Empty(t, optionBlockObjects)
 
 	options = []string{"a", "b"}
-	optionBlockObjects = createOptionBlockObjects(options, false)
+	optionBlockObjects = createOptionBlockObjects(options)
 	assert.Equal(t, []*slack.OptionBlockObject{
 		(&slack.OptionBlockObject{
 			Text:  &slack.TextBlockObject{Type: "plain_text", Text: "a", Emoji: false, Verbatim: false},
@@ -152,6 +152,8 @@ type dummyClient struct {
 	Reminder         *slack.Reminder
 	AuthTestResponse *slack.AuthTestResponse
 	User             *slack.User
+	Channels         []slack.Channel
+	NextCursor       string
 }
 
 var _ SlackClient = &dummyClient{}
@@ -203,4 +205,12 @@ func (c *dummyClient) AddChannelReminder(channelID string, text string, time str
 
 func (c *dummyClient) GetUserInfoContext(ctx context.Context, user string) (*slack.User, error) {
 	return c.User, c.err
+}
+
+func (c *dummyClient) AuthTestContext(ctx context.Context) (*slack.AuthTestResponse, error) {
+	return c.AuthTestResponse, c.err
+}
+
+func (c *dummyClient) GetConversationsForUserContext(ctx context.Context, params *slack.GetConversationsForUserParameters) ([]slack.Channel, string, error) {
+	return c.Channels, c.NextCursor, c.err
 }
