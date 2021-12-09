@@ -201,9 +201,9 @@ func (h *botHandler) cmdIncident(ctx context.Context, w http.ResponseWriter, cmd
 	}
 	channelIDs := []string{}
 	for i := range channels {
-		channelIDs = append(channelIDs, fmt.Sprintf("<#%s>", channels[i].ID))
+		channelIDs = append(channelIDs, channels[i].ID)
 	}
-	botChannels := createOptionBlockObjects(channelIDs)
+	botChannels := createOptionBlockObjects(channelIDs, "channel")
 	broadcastChOption := slack.NewOptionsSelectBlockElement(slack.OptTypeStatic, nil, "broadcast_channel", botChannels...)
 	initialChannel := fmt.Sprintf("<#%s>", h.opts.BroadcastChannelID)
 	initialChannelLabel := slack.NewTextBlockObject(slack.PlainTextType, initialChannel, false, false)
@@ -298,7 +298,7 @@ func (h *botHandler) cmdIncident(ctx context.Context, w http.ResponseWriter, cmd
 		w.WriteHeader(http.StatusInternalServerError)
 		return err
 	}
-	envOptions := createOptionBlockObjects(envs)
+	envOptions := createOptionBlockObjects(envs, "")
 	envOptionsBlock := slack.NewCheckboxGroupsBlockElement("incident_environment_affected", envOptions...)
 	environmentBlock := slack.NewInputBlock("incident_environment_affected", envTxt, envOptionsBlock)
 
@@ -314,7 +314,7 @@ func (h *botHandler) cmdIncident(ctx context.Context, w http.ResponseWriter, cmd
 		w.WriteHeader(http.StatusInternalServerError)
 		return err
 	}
-	regionOptions := createOptionBlockObjects(regions)
+	regionOptions := createOptionBlockObjects(regions, "")
 	regionOptionsBlock := slack.NewCheckboxGroupsBlockElement("incident_region_affected", regionOptions...)
 	regionBlock := slack.NewInputBlock("incident_region_affected", regionTxt, regionOptionsBlock)
 
@@ -433,9 +433,9 @@ func (h *botHandler) cmdResolveIncident(ctx context.Context, w http.ResponseWrit
 	}
 	channelIDs := []string{}
 	for i := range channels {
-		channelIDs = append(channelIDs, fmt.Sprintf("<#%s>", channels[i].ID))
+		channelIDs = append(channelIDs, channels[i].ID)
 	}
-	botChannels := createOptionBlockObjects(channelIDs)
+	botChannels := createOptionBlockObjects(channelIDs, "channel")
 	broadcastChOption := slack.NewOptionsSelectBlockElement(slack.OptTypeStatic, nil, "broadcast_channel", botChannels...)
 	initialChannel := fmt.Sprintf("<#%s>", h.opts.BroadcastChannelID)
 	initialChannelLabel := slack.NewTextBlockObject(slack.PlainTextType, initialChannel, false, false)
@@ -487,7 +487,7 @@ func (h *botHandler) cmdResolveIncident(ctx context.Context, w http.ResponseWrit
 			DefaultMessage: &i18n.Message{
 				ID:    "No",
 				Other: "No"},
-		})})
+		})}, "")
 	archiveOptionsBlock := slack.NewRadioButtonsBlockElement("archive_choice", archiveOptions...)
 	archiveBlock := slack.NewInputBlock("archive_choice", archiveTxt, archiveOptionsBlock)
 
@@ -532,11 +532,20 @@ func (h *botHandler) cmdResolveIncident(ctx context.Context, w http.ResponseWrit
 	return nil
 }
 
+type OptionType struct {
+}
+
 // createOptionBlockObjects - utility function for generating option block objects
-func createOptionBlockObjects(options []string) []*slack.OptionBlockObject {
+func createOptionBlockObjects(options []string, optionType string) []*slack.OptionBlockObject {
 	optionBlockObjects := make([]*slack.OptionBlockObject, 0, len(options))
+	var text string
 	for _, o := range options {
-		optionText := slack.NewTextBlockObject(slack.PlainTextType, o, false, false)
+		if optionType == "channel" {
+			text = fmt.Sprintf("<#%s>", o)
+		} else {
+			text = o
+		}
+		optionText := slack.NewTextBlockObject(slack.PlainTextType, text, false, false)
 		optionBlockObjects = append(optionBlockObjects, slack.NewOptionBlockObject(o, optionText, nil))
 	}
 	return optionBlockObjects
