@@ -205,10 +205,9 @@ func (h *botHandler) cmdIncident(ctx context.Context, w http.ResponseWriter, cmd
 	}
 	botChannels := createOptionBlockObjects(channelIDs, "channel")
 	broadcastChOption := slack.NewOptionsSelectBlockElement(slack.OptTypeStatic, nil, "broadcast_channel", botChannels...)
-	initialChannel := fmt.Sprintf("<#%s>", h.opts.BroadcastChannelID)
-	initialChannelLabel := slack.NewTextBlockObject(slack.PlainTextType, initialChannel, false, false)
-	initialChannelOptionBlockObject := slack.NewOptionBlockObject(initialChannel, initialChannelLabel, nil)
-	broadcastChOption.InitialOption = initialChannelOptionBlockObject
+	initialChannelLabel := slack.NewTextBlockObject(slack.PlainTextType,
+		fmt.Sprintf("<#%s>", h.opts.BroadcastChannelID), false, false)
+	broadcastChOption.InitialOption = slack.NewOptionBlockObject(h.opts.BroadcastChannelID, initialChannelLabel, nil)
 	broadcastChBlock := slack.NewInputBlock("broadcast_channel", broadcastChLabel, broadcastChOption)
 	broadcastChBlock.Hint = slack.NewTextBlockObject(slack.PlainTextType,
 		h.opts.Localizer.MustLocalize(&i18n.LocalizeConfig{
@@ -530,9 +529,6 @@ func (h *botHandler) cmdResolveIncident(ctx context.Context, w http.ResponseWrit
 
 	w.WriteHeader(http.StatusOK)
 	return nil
-}
-
-type OptionType struct {
 }
 
 // createOptionBlockObjects - utility function for generating option block objects

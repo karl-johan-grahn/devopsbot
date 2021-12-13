@@ -306,8 +306,8 @@ func (h *botHandler) doIncidentTasks(ctx context.Context, params *inputParams, i
 	// Need to use user access token since bot token is not allowed token type: https://api.slack.com/methods/reminders.add
 	userSlackClient := slack.New(h.opts.UserAccessToken)
 	if _, err := userSlackClient.AddChannelReminder(incidentChannel.ID,
-		fmt.Sprintf("Reminder for IC <@%s>: Update progress about the incident in <#%s>", params.incidentCommander, params.broadcastChannel),
-		"Every 30 min"); err != nil {
+		fmt.Sprintf("\"Reminder for IC <@%s>: Update progress about the incident every 30 min in <#%s>, or remove the reminder and archive the channel if the incident is resolved\"", params.incidentCommander, params.broadcastChannel),
+		fmt.Sprintf("every day at %s", time.Now().Local().Add(time.Minute * time.Duration(30)).Format("03:04:05PM"))); err != nil {
 		if sendErr := h.sendMessage(ctx, incidentChannel.ID, slack.MsgOptionPostEphemeral(params.incidentDeclarer),
 			slack.MsgOptionText(fmt.Sprintf("Failed to add channel reminder: %s", err.Error()), false)); sendErr != nil {
 			log.Error().Err(sendErr).Msg(sendError)
@@ -409,7 +409,7 @@ func postErrorResponse(ctx context.Context, verr map[string]string, w http.Respo
 
 // createChannelName - create incident channel name based on input field
 func createChannelName(s string) string {
-	return fmt.Sprintf("inc_%s_%s", s, strings.ToLower(time.Now().Format("Jan2")))
+	return fmt.Sprintf("inc_%s_%s", s, strings.ToLower(time.Now().Format("2Jan2006")))
 }
 
 // createUserFriendlyConversationError - Map https://api.slack.com/methods/conversations.create error codes to user friendly messages

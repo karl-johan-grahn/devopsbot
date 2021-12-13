@@ -141,6 +141,19 @@ func TestCreateOptionBlockObjects(t *testing.T) {
 			Value: "b",
 			URL:   ""}),
 	}, optionBlockObjects)
+
+	options = []string{"ID1", "ID2"}
+	optionBlockObjects = createOptionBlockObjects(options, "channel")
+	assert.Equal(t, []*slack.OptionBlockObject{
+		(&slack.OptionBlockObject{
+			Text:  &slack.TextBlockObject{Type: "plain_text", Text: "<#ID1>", Emoji: false, Verbatim: false},
+			Value: "ID1",
+			URL:   ""}),
+		(&slack.OptionBlockObject{
+			Text:  &slack.TextBlockObject{Type: "plain_text", Text: "<#ID2>", Emoji: false, Verbatim: false},
+			Value: "ID2",
+			URL:   ""}),
+	}, optionBlockObjects)
 }
 
 type dummyClient struct {
