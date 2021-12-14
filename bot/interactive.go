@@ -307,7 +307,7 @@ func (h *botHandler) doIncidentTasks(ctx context.Context, params *inputParams, i
 	userSlackClient := slack.New(h.opts.UserAccessToken)
 	if _, err := userSlackClient.AddChannelReminder(incidentChannel.ID,
 		fmt.Sprintf("\"Reminder for IC <@%s>: Update progress about the incident every 30 min in <#%s>, or remove the reminder and archive the channel if the incident is resolved\"", params.incidentCommander, params.broadcastChannel),
-		fmt.Sprintf("every day at %s", time.Now().Local().Add(time.Minute * time.Duration(30)).Format("03:04:05PM"))); err != nil {
+		fmt.Sprintf("every day at %s", time.Now().Local().Add(time.Minute*time.Duration(30)).Format("03:04:05PM"))); err != nil {
 		if sendErr := h.sendMessage(ctx, incidentChannel.ID, slack.MsgOptionPostEphemeral(params.incidentDeclarer),
 			slack.MsgOptionText(fmt.Sprintf("Failed to add channel reminder: %s", err.Error()), false)); sendErr != nil {
 			log.Error().Err(sendErr).Msg(sendError)
