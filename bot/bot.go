@@ -171,7 +171,6 @@ func (h *botHandler) cmdIncident(ctx context.Context, w http.ResponseWriter, cmd
 			DefaultMessage: &i18n.Message{
 				ID:    "IncidentCreationDescription",
 				Other: "This will create a new incident Slack channel, and notify about the incident in a broadcast channel. This incident response system is based on the Incident Command System."},
-			TemplateData: map[string]string{"broadcastChannel": fmt.Sprintf("<#%s>", h.opts.BroadcastChannelID)},
 		}), false, false)
 	contextBlock := slack.NewContextBlock("context", contextText)
 
@@ -402,7 +401,6 @@ func (h *botHandler) cmdResolveIncident(ctx context.Context, w http.ResponseWrit
 			DefaultMessage: &i18n.Message{
 				ID:    "ResolveIncidentDescription",
 				Other: "This will resolve an incident and notify about the resolution in a broadcast channel"},
-			TemplateData: map[string]string{"broadcastChannel": fmt.Sprintf("<#%s>", h.opts.BroadcastChannelID)},
 		}), false, false)
 	contextBlock := slack.NewContextBlock("context", contextText)
 
