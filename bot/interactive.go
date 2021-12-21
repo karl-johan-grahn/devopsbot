@@ -194,11 +194,14 @@ func (h *botHandler) declareIncident(ctx context.Context, payload *slack.Interac
 	for i, r := range payload.View.State.Values["incident_region_affected"]["incident_region_affected"].SelectedOptions {
 		incidentRegionsAffected[i] = r.Value
 	}
+	incidentSecurityRelated := false
+	if len(payload.View.State.Values["security_incident"]["security_incident"].SelectedOptions) > 0 {
+		incidentSecurityRelated = payload.View.State.Values["security_incident"]["security_incident"].SelectedOptions[0].Value == "yes"
+	}
 	inputParams := &inputParams{
 		broadcastChannel:             payload.View.State.Values["broadcast_channel"]["broadcast_channel"].SelectedOption.Value,
 		incidentChannelName:          incidentChannelName,
-		// TODO: maybe need to loop over values?
-		incidentSecurityRelated:      payload.View.State.Values["security_incident"]["security_incident"].SelectedOption.Value == "yes",
+		incidentSecurityRelated:      incidentSecurityRelated,
 		incidentResponder:            payload.View.State.Values["incident_responder"]["incident_responder"].SelectedUser,
 		incidentCommander:            payload.View.State.Values["incident_commander"]["incident_commander"].SelectedUser,
 		incidentInvitees:             payload.View.State.Values["incident_invitees"]["incident_invitees"].SelectedUsers,
@@ -238,9 +241,8 @@ func (h *botHandler) doIncidentTasks(ctx context.Context, params *inputParams, i
 	} else {
 		securityMessage = ""
 	}
-	// Set channel purpose and topic
+	// Set channel purpose and topic - they can be maximum 250 characters
 	overview := fmt.Sprintf("*Incident channel*\n"+
-		"*Incident summary:* %s\n"+
 		"*Environment affected:* %s\n"+
 		"*Region affected:* %s\n"+
 		"*Responder:* <@%s>\n"+
@@ -248,7 +250,7 @@ func (h *botHandler) doIncidentTasks(ctx context.Context, params *inputParams, i
 		"*Broadcast channel:* <#%s>\n\n"+
 		"Declared by: <@%s>\n"+
 		securityMessage,
-		params.incidentSummary, params.incidentEnvironmentsAffected, params.incidentRegionsAffected,
+		params.incidentEnvironmentsAffected, params.incidentRegionsAffected,
 		params.incidentResponder, params.incidentCommander, params.broadcastChannel, params.incidentDeclarer)
 	if _, err := h.slackClient.SetPurposeOfConversationContext(ctx, incidentChannel.ID, overview); err != nil {
 		if sendErr := h.sendMessage(ctx, params.broadcastChannel, slack.MsgOptionPostEphemeral(params.incidentDeclarer),
