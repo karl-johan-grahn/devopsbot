@@ -197,6 +197,7 @@ func (h *botHandler) declareIncident(ctx context.Context, payload *slack.Interac
 	inputParams := &inputParams{
 		broadcastChannel:             payload.View.State.Values["broadcast_channel"]["broadcast_channel"].SelectedOption.Value,
 		incidentChannelName:          incidentChannelName,
+		// TODO: maybe need to loop over values?
 		incidentSecurityRelated:      payload.View.State.Values["security_incident"]["security_incident"].SelectedOption.Value == "yes",
 		incidentResponder:            payload.View.State.Values["incident_responder"]["incident_responder"].SelectedUser,
 		incidentCommander:            payload.View.State.Values["incident_commander"]["incident_commander"].SelectedUser,
@@ -307,14 +308,13 @@ func (h *botHandler) doIncidentTasks(ctx context.Context, params *inputParams, i
 	userSlackClient := slack.New(h.opts.UserAccessToken)
 	user, err := h.slackClient.GetUserInfoContext(ctx, params.incidentDeclarer)
 	if err != nil {
-		log.Error().Err(err).Send()
-		return
+		if sendErr := h.sendMessage(ctx, incidentChannel.ID, slack.MsgOptionPostEphemeral(params.incidentDeclarer),
+			slack.MsgOptionText(fmt.Sprintf("Failed to get user info context: %s", err.Error()), false)); sendErr != nil {
+			log.Error().Err(sendErr).Msg(sendError)
+			return
+		}
 	}
-	loc, err := time.LoadLocation(user.TZ)
-	if err != nil {
-		log.Error().Err(err).Send()
-		return
-	}
+	loc := time.FixedZone("CUSTOM-TZ", user.TZOffset)
 	now := time.Now().In(loc)
 	if _, err := userSlackClient.AddChannelReminder(incidentChannel.ID,
 		fmt.Sprintf("\"Reminder for IC <@%s>: Update progress about the incident every 30 min in <#%s>, or remove the reminder and archive the channel if the incident is resolved\"", params.incidentCommander, params.broadcastChannel),
