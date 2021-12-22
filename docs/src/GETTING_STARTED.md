@@ -206,6 +206,16 @@ spec:
                 configMapKeyRef:
                   key: incident.regions
                   name: devopsbot-settings
+            - name: incident.severityLevels
+              valueFrom:
+                configMapKeyRef:
+                  key: incident.severityLevels
+                  name: devopsbot-settings
+            - name: incident.impactLevels
+              valueFrom:
+                configMapKeyRef:
+                  key: incident.impactLevels
+                  name: devopsbot-settings
             - name: addr
               valueFrom:
                 configMapKeyRef:
