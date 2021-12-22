@@ -150,6 +150,8 @@ type inputParams struct {
 	incidentInvitees             []string
 	incidentEnvironmentsAffected string
 	incidentRegionsAffected      string
+	IncidentSeverityLevel        string
+	IncidentImpactLevel          string
 	incidentSummary              string
 	incidentDeclarer             string
 	broadcastChannel             string
@@ -207,6 +209,8 @@ func (h *botHandler) declareIncident(ctx context.Context, payload *slack.Interac
 		incidentInvitees:             payload.View.State.Values["incident_invitees"]["incident_invitees"].SelectedUsers,
 		incidentEnvironmentsAffected: strings.Join(incidentEnvironmentsAffected, ", "),
 		incidentRegionsAffected:      strings.Join(incidentRegionsAffected, ", "),
+		IncidentSeverityLevel:        payload.View.State.Values["incident_severity_level"]["incident_severity_level"].SelectedOption.Value,
+		IncidentImpactLevel:          payload.View.State.Values["incident_impact_level"]["incident_impact_level"].SelectedOption.Value,
 		incidentSummary:              payload.View.State.Values["incident_summary"]["incident_summary"].Value,
 		incidentDeclarer:             payload.User.ID,
 	}
@@ -242,15 +246,17 @@ func (h *botHandler) doIncidentTasks(ctx context.Context, params *inputParams, i
 		securityMessage = ""
 	}
 	// Set channel purpose and topic - they can be maximum 250 characters
-	overview := fmt.Sprintf("*Incident channel*\n"+
-		"*Environment affected:* %s\n"+
+	overview := fmt.Sprintf("*Environment affected:* %s\n"+
 		"*Region affected:* %s\n"+
+		"*Severity:* %s\n"+
+		"*Impact:* %s\n"+
 		"*Responder:* <@%s>\n"+
 		"*Commander:* <@%s>\n"+
 		"*Broadcast channel:* <#%s>\n\n"+
 		"Declared by: <@%s>\n"+
 		securityMessage,
 		params.incidentEnvironmentsAffected, params.incidentRegionsAffected,
+		params.IncidentSeverityLevel, params.IncidentImpactLevel,
 		params.incidentResponder, params.incidentCommander, params.broadcastChannel, params.incidentDeclarer)
 	if _, err := h.slackClient.SetPurposeOfConversationContext(ctx, incidentChannel.ID, overview); err != nil {
 		if sendErr := h.sendMessage(ctx, params.broadcastChannel, slack.MsgOptionPostEphemeral(params.incidentDeclarer),
@@ -283,12 +289,15 @@ func (h *botHandler) doIncidentTasks(ctx context.Context, params *inputParams, i
 			"*Incident summary:* %s\n"+
 			"*Environment affected:* %s\n"+
 			"*Region affected:* %s\n"+
+			"*Severity:* %s\n"+
+			"*Impact:* %s\n"+
 			"*Responder:* <@%s>\n"+
 			"*Commander:* <@%s>\n"+
 			"*Incident channel:* <#%s>\n"+
 			securityMessage,
 			params.incidentDeclarer, params.incidentSummary, params.incidentEnvironmentsAffected,
-			params.incidentRegionsAffected, params.incidentResponder, params.incidentCommander,
+			params.incidentRegionsAffected, params.IncidentSeverityLevel, params.IncidentImpactLevel,
+			params.incidentResponder, params.incidentCommander,
 			incidentChannel.ID), false)); err != nil {
 		log.Error().Err(err).Msg(sendError)
 		return

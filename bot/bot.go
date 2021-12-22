@@ -44,6 +44,10 @@ type Opts struct {
 	IncidentEnvs string
 	// IncidentRegions - the regions that could possibly be affected
 	IncidentRegions string
+	// IncidentSeverityLevels - the possible severity levels of an incident
+	IncidentSeverityLevels string
+	// IncidentImpactLevels - the possible impact levels of an incident
+	IncidentImpactLevels string
 	// Localizer - the localizer to use for the set of language preferences
 	Localizer *i18n.Localizer
 }
@@ -316,6 +320,38 @@ func (h *botHandler) cmdIncident(ctx context.Context, w http.ResponseWriter, cmd
 	regionOptionsBlock := slack.NewCheckboxGroupsBlockElement("incident_region_affected", regionOptions...)
 	regionBlock := slack.NewInputBlock("incident_region_affected", regionTxt, regionOptionsBlock)
 
+	severityTxt := slack.NewTextBlockObject(slack.PlainTextType,
+		h.opts.Localizer.MustLocalize(&i18n.LocalizeConfig{
+			DefaultMessage: &i18n.Message{
+				ID:    "Severity",
+				Other: "Severity"},
+		}), false, false)
+	var severityLevels []string
+	if err := json.Unmarshal([]byte(h.opts.IncidentSeverityLevels), &severityLevels); err != nil {
+		log.Error().Err(err).Msg("Failed to unmarshal incident severity levels")
+		w.WriteHeader(http.StatusInternalServerError)
+		return err
+	}
+	severityOptions := createOptionBlockObjects(severityLevels, "")
+	severityOptionsBlock := slack.NewRadioButtonsBlockElement("incident_severity_level", severityOptions...)
+	severityBlock := slack.NewInputBlock("incident_severity_level", severityTxt, severityOptionsBlock)
+
+	impactTxt := slack.NewTextBlockObject(slack.PlainTextType,
+		h.opts.Localizer.MustLocalize(&i18n.LocalizeConfig{
+			DefaultMessage: &i18n.Message{
+				ID:    "Impact",
+				Other: "Impact"},
+		}), false, false)
+	var impactLevels []string
+	if err := json.Unmarshal([]byte(h.opts.IncidentImpactLevels), &impactLevels); err != nil {
+		log.Error().Err(err).Msg("Failed to unmarshal incident impact levels")
+		w.WriteHeader(http.StatusInternalServerError)
+		return err
+	}
+	impactOptions := createOptionBlockObjects(impactLevels, "")
+	impactOptionsBlock := slack.NewRadioButtonsBlockElement("incident_impact_level", impactOptions...)
+	impactBlock := slack.NewInputBlock("incident_impact_level", impactTxt, impactOptionsBlock)
+
 	summaryText := slack.NewTextBlockObject(slack.PlainTextType,
 		h.opts.Localizer.MustLocalize(&i18n.LocalizeConfig{
 			DefaultMessage: &i18n.Message{
@@ -348,6 +384,8 @@ func (h *botHandler) cmdIncident(ctx context.Context, w http.ResponseWriter, cmd
 			commanderBlock,
 			environmentBlock,
 			regionBlock,
+			severityBlock,
+			impactBlock,
 			summaryBlock,
 			inviteeBlock,
 		},
