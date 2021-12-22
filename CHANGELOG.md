@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - When generating version file, enable matching non-annotated tags
 - Slack does not yet allow users to create reminders recurring more often than once a day, so just create one that runs daily 30 min after the incident has been declared
 - Include year in Slack channel name to decrease chance of having name creation conflicts and to make the name more explicit
+- Describe incidents according to severity and impact
 
 ## [0.12.0] - 2021-11-29
 ### Adds

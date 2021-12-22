@@ -56,6 +56,18 @@ data:
       "eu-west-1",
       "us-east-1"
     ]
+  incident.severityLevels: |-
+    [
+      "high",
+      "medium",
+      "low"
+    ]
+  incident.impactLevels: |-
+    [
+      "high",
+      "medium",
+      "low"
+    ]
   server.prometheusNamespace: devopsbot
   tls.addr: :3443
   tls.cert: /var/devopsbot/tls.crt
