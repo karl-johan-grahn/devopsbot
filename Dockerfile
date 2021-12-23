@@ -6,9 +6,9 @@ COPY . ./
 
 RUN make build
 
-FROM docker.io/library/alpine:3.14.2
+FROM docker.io/library/alpine:3.15.0
 
-RUN apk add --no-cache ca-certificates=20191127-r5
+RUN apk add --no-cache ca-certificates=20191127-r7
 
 ARG VERSION
 ARG REVISION
