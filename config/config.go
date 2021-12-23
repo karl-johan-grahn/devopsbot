@@ -21,6 +21,8 @@ type Config struct {
 
 	IncidentEnvs           string
 	IncidentRegions        string
+	IncidentSeverityLevels string
+	IncidentImpactLevels   string
 	IncidentDocTemplateURL string
 }
 
@@ -42,6 +44,8 @@ func FromViper(v *viper.Viper) (Config, error) {
 
 	c.IncidentEnvs = v.GetString("incident.environments")
 	c.IncidentRegions = v.GetString("incident.regions")
+	c.IncidentSeverityLevels = v.GetString("incident.severityLevels")
+	c.IncidentImpactLevels = v.GetString("incident.impactLevels")
 	c.IncidentDocTemplateURL = v.GetString("incidentDocTemplateURL")
 
 	return c, nil
