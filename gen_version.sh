@@ -1,7 +1,7 @@
 #!/bin/bash
-if (git describe --abbrev=0 --exact-match &>/dev/null); then
+if (git describe --abbrev=0 --tags --exact-match &>/dev/null); then
   # If we are on a tagged commit, use that tag as version
-  git describe --abbrev=0 --exact-match | sed 's/v\(.*\)/\1/'
+  git describe --abbrev=0 --tags --exact-match | sed 's/v\(.*\)/\1/'
 else
   # Otherwise get the latest tagged commit
   tag=$(git rev-list --tags --max-count=1 2>/dev/null)
