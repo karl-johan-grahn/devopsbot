@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.2] - 2021-12-23
+### Updates
+- Update docker/login-action action to v1.12.0
+
+## [0.13.1] - 2021-12-23
+### Updates
+- Update docker/metadata-action action to v3.6.2
+
+## [0.13.0] - 2021-12-22
+### Updates
+- When generating version file, enable matching non-annotated tags
+- Slack does not yet allow users to create reminders recurring more often than once a day, so just create one that runs daily 30 min after the incident has been declared
+- Include year in Slack channel name to decrease chance of having name creation conflicts and to make the name more explicit
+- Describe incidents according to severity and impact
+
 ## [0.12.0] - 2021-11-29
 ### Adds
 - Add broadcast channel as input option, add dispatch action when characters are entered, update to Slack Go API v0.10.0
