@@ -25,13 +25,16 @@ import (
 )
 
 const (
-	tlsAddr            = "tls.addr"
-	tlsCert            = "tls.cert"
-	tlsKey             = "tls.key"
-	slackAccessToken   = "slack.accessToken"
-	slackSigningSecret = "slack.signingSecret"
-	slackAdminGroup    = "slack.adminGroupID"
-	broadcastChannelID = "slack.broadcastChannelID"
+	tlsAddr = "tls.addr"
+	tlsCert = "tls.cert"
+	tlsKey  = "tls.key"
+	// This is not a hardcoded credential but simply a convenience reference to the secret name
+	//nolint:gosec
+	slackBotAccessToken  = "slack.botAccessToken"
+	slackUserAccessToken = "slack.userAccessToken"
+	slackSigningSecret   = "slack.signingSecret"
+	slackAdminGroup      = "slack.adminGroupID"
+	broadcastChannelID   = "slack.broadcastChannelID"
 )
 
 func initFlags(cmd *cobra.Command) {
@@ -46,7 +49,8 @@ func initFlags(cmd *cobra.Command) {
 	cmd.Flags().BoolP("verbose", "v", false, "Output extra logs")
 	cmd.Flags().BoolP("trace", "t", false, "Output trace logs")
 
-	cmd.Flags().String(slackAccessToken, "", "Slack bot access token")
+	cmd.Flags().String(slackBotAccessToken, "", "Slack bot access token")
+	cmd.Flags().String(slackUserAccessToken, "", "Slack user access token")
 	cmd.Flags().String(slackSigningSecret, "", "Slack bot signing secret")
 	cmd.Flags().String(slackAdminGroup, "", "Slack ID for the admin user group")
 	cmd.Flags().String(broadcastChannelID, "", "Slack ID for the channel to use as the broadcast channel")
@@ -100,11 +104,14 @@ func initConfig(cmd *cobra.Command) func() {
 		_ = viper.BindEnv("incidentDocTemplateURL", "incidentDocTemplateURL")
 		_ = viper.BindEnv("incident.environments", "incident.environments")
 		_ = viper.BindEnv("incident.regions", "incident.regions")
+		_ = viper.BindEnv("incident.severityLevels", "incident.severityLevels")
+		_ = viper.BindEnv("incident.impactLevels", "incident.impactLevels")
 		_ = viper.BindEnv("addr", "addr")
 		_ = viper.BindEnv(tlsAddr, tlsAddr)
 		_ = viper.BindEnv(tlsCert, tlsCert)
 		_ = viper.BindEnv(tlsKey, tlsKey)
-		_ = viper.BindEnv(slackAccessToken, slackAccessToken)
+		_ = viper.BindEnv(slackBotAccessToken, slackBotAccessToken)
+		_ = viper.BindEnv(slackUserAccessToken, slackUserAccessToken)
 		_ = viper.BindEnv(slackSigningSecret, slackSigningSecret)
 		_ = viper.BindEnv(slackAdminGroup, slackAdminGroup)
 		_ = viper.BindEnv(broadcastChannelID, broadcastChannelID)
@@ -148,17 +155,20 @@ func newCmd() *cobra.Command {
 				return err
 			}
 
-			slackClient := slack.New(cfg.SlackAccessToken,
+			slackClient := slack.New(cfg.SlackBotAccessToken,
 				slack.OptionDebug(viper.GetBool("verbose")),
 				slack.OptionHTTPClient(&http.Client{Transport: &spyTransport{rt: http.DefaultTransport}}),
 			)
 			opts := bot.Opts{
+				UserAccessToken:        cfg.SlackUserAccessToken,
 				SigningSecret:          cfg.SlackSigningSecret,
 				AdminGroupID:           cfg.SlackAdminGroupID,
 				BroadcastChannelID:     cfg.BroadcastChannelID,
 				IncidentDocTemplateURL: cfg.IncidentDocTemplateURL,
 				IncidentEnvs:           cfg.IncidentEnvs,
 				IncidentRegions:        cfg.IncidentRegions,
+				IncidentSeverityLevels: cfg.IncidentSeverityLevels,
+				IncidentImpactLevels:   cfg.IncidentImpactLevels,
 			}
 			log.Debug().Msgf("opts: %#v", opts)
 

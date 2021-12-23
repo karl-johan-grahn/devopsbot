@@ -30,6 +30,8 @@ type ugMembers struct {
 }
 
 type Opts struct {
+	// UserAccessToken - the Slack user access token
+	UserAccessToken string
 	// SigningSecret - the signing secret from the Slack app config
 	SigningSecret string
 	// BroadcastChannelID - the ID of the Slack channel the bot will broadcast in
@@ -42,6 +44,10 @@ type Opts struct {
 	IncidentEnvs string
 	// IncidentRegions - the regions that could possibly be affected
 	IncidentRegions string
+	// IncidentSeverityLevels - the possible severity levels of an incident
+	IncidentSeverityLevels string
+	// IncidentImpactLevels - the possible impact levels of an incident
+	IncidentImpactLevels string
 	// Localizer - the localizer to use for the set of language preferences
 	Localizer *i18n.Localizer
 }
@@ -168,10 +174,50 @@ func (h *botHandler) cmdIncident(ctx context.Context, w http.ResponseWriter, cmd
 		h.opts.Localizer.MustLocalize(&i18n.LocalizeConfig{
 			DefaultMessage: &i18n.Message{
 				ID:    "IncidentCreationDescription",
-				Other: "This will create a new incident Slack channel, and notify {{.broadcastChannel}} about the incident. This incident response system is based on the Incident Command System (ICS)."},
-			TemplateData: map[string]string{"broadcastChannel": fmt.Sprintf("<#%s>", h.opts.BroadcastChannelID)},
+				Other: "This will create a new incident Slack channel, and notify about the incident in a broadcast channel. This incident response system is based on the Incident Command System."},
 		}), false, false)
 	contextBlock := slack.NewContextBlock("context", contextText)
+
+	broadcastChLabel := slack.NewTextBlockObject(slack.PlainTextType,
+		h.opts.Localizer.MustLocalize(&i18n.LocalizeConfig{
+			DefaultMessage: &i18n.Message{
+				ID:    "BroadcastChannel",
+				Other: "Broadcast channel"},
+		}), false, false)
+	// TODO: Only get one page of results for now, implement pagination later if needed
+	authTestResp, _ := h.slackClient.AuthTestContext(ctx)
+	channels, _, err := h.slackClient.GetConversationsForUserContext(ctx, &slack.GetConversationsForUserParameters{
+		UserID:          authTestResp.UserID,
+		Limit:           100,
+		ExcludeArchived: true,
+	})
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to get conversations for bot")
+		w.WriteHeader(http.StatusInternalServerError)
+		return err
+	}
+	if channels == nil {
+		// If the bot has not been added as a member to any channel at all, it is not possible to post error in the UI
+		log.Error().Err(err).Msg("Bot must be added to a channel for broadcasting messages")
+		w.WriteHeader(http.StatusInternalServerError)
+		return err
+	}
+	channelIDs := []string{}
+	for i := range channels {
+		channelIDs = append(channelIDs, channels[i].ID)
+	}
+	botChannels := createOptionBlockObjects(channelIDs, "channel")
+	broadcastChOption := slack.NewOptionsSelectBlockElement(slack.OptTypeStatic, nil, "broadcast_channel", botChannels...)
+	initialChannelLabel := slack.NewTextBlockObject(slack.PlainTextType,
+		fmt.Sprintf("<#%s>", h.opts.BroadcastChannelID), false, false)
+	broadcastChOption.InitialOption = slack.NewOptionBlockObject(h.opts.BroadcastChannelID, initialChannelLabel, nil)
+	broadcastChBlock := slack.NewInputBlock("broadcast_channel", broadcastChLabel, broadcastChOption)
+	broadcastChBlock.Hint = slack.NewTextBlockObject(slack.PlainTextType,
+		h.opts.Localizer.MustLocalize(&i18n.LocalizeConfig{
+			DefaultMessage: &i18n.Message{
+				ID:    "BroadcastChannelHint",
+				Other: "The channels listed are the ones that the bot has been added to as a user"},
+		}), false, false)
 
 	// Only the inputs in input blocks will be included in view_submission’s view.state.values: https://slack.dev/java-slack-sdk/guides/modals
 	incidentNameText := slack.NewTextBlockObject(slack.PlainTextType,
@@ -183,6 +229,9 @@ func (h *botHandler) cmdIncident(ctx context.Context, w http.ResponseWriter, cmd
 	incidentNameElement := slack.NewPlainTextInputBlockElement(incidentNameText, "incident_name")
 	// Name will be prefixed with "inc_" and postfixed with "_<date>" so keep it shorter than the maximum 80 characters
 	incidentNameElement.MaxLength = 60
+	incidentNameElement.DispatchActionConfig = &slack.DispatchActionConfig{
+		TriggerActionsOn: []string{"on_character_entered"},
+	}
 	incidentNameBlock := slack.NewInputBlock("incident_name", incidentNameText, incidentNameElement)
 	incidentNameBlock.DispatchAction = true
 	incidentNameBlock.Hint = slack.NewTextBlockObject(slack.PlainTextType,
@@ -251,7 +300,7 @@ func (h *botHandler) cmdIncident(ctx context.Context, w http.ResponseWriter, cmd
 		w.WriteHeader(http.StatusInternalServerError)
 		return err
 	}
-	envOptions := createOptionBlockObjects(envs, false)
+	envOptions := createOptionBlockObjects(envs, "")
 	envOptionsBlock := slack.NewCheckboxGroupsBlockElement("incident_environment_affected", envOptions...)
 	environmentBlock := slack.NewInputBlock("incident_environment_affected", envTxt, envOptionsBlock)
 
@@ -267,9 +316,41 @@ func (h *botHandler) cmdIncident(ctx context.Context, w http.ResponseWriter, cmd
 		w.WriteHeader(http.StatusInternalServerError)
 		return err
 	}
-	regionOptions := createOptionBlockObjects(regions, false)
+	regionOptions := createOptionBlockObjects(regions, "")
 	regionOptionsBlock := slack.NewCheckboxGroupsBlockElement("incident_region_affected", regionOptions...)
 	regionBlock := slack.NewInputBlock("incident_region_affected", regionTxt, regionOptionsBlock)
+
+	severityTxt := slack.NewTextBlockObject(slack.PlainTextType,
+		h.opts.Localizer.MustLocalize(&i18n.LocalizeConfig{
+			DefaultMessage: &i18n.Message{
+				ID:    "Severity",
+				Other: "Severity"},
+		}), false, false)
+	var severityLevels []string
+	if err := json.Unmarshal([]byte(h.opts.IncidentSeverityLevels), &severityLevels); err != nil {
+		log.Error().Err(err).Msg("Failed to unmarshal incident severity levels")
+		w.WriteHeader(http.StatusInternalServerError)
+		return err
+	}
+	severityOptions := createOptionBlockObjects(severityLevels, "")
+	severityOptionsBlock := slack.NewRadioButtonsBlockElement("incident_severity_level", severityOptions...)
+	severityBlock := slack.NewInputBlock("incident_severity_level", severityTxt, severityOptionsBlock)
+
+	impactTxt := slack.NewTextBlockObject(slack.PlainTextType,
+		h.opts.Localizer.MustLocalize(&i18n.LocalizeConfig{
+			DefaultMessage: &i18n.Message{
+				ID:    "Impact",
+				Other: "Impact"},
+		}), false, false)
+	var impactLevels []string
+	if err := json.Unmarshal([]byte(h.opts.IncidentImpactLevels), &impactLevels); err != nil {
+		log.Error().Err(err).Msg("Failed to unmarshal incident impact levels")
+		w.WriteHeader(http.StatusInternalServerError)
+		return err
+	}
+	impactOptions := createOptionBlockObjects(impactLevels, "")
+	impactOptionsBlock := slack.NewRadioButtonsBlockElement("incident_impact_level", impactOptions...)
+	impactBlock := slack.NewInputBlock("incident_impact_level", impactTxt, impactOptionsBlock)
 
 	summaryText := slack.NewTextBlockObject(slack.PlainTextType,
 		h.opts.Localizer.MustLocalize(&i18n.LocalizeConfig{
@@ -296,12 +377,15 @@ func (h *botHandler) cmdIncident(ctx context.Context, w http.ResponseWriter, cmd
 	blocks := slack.Blocks{
 		BlockSet: []slack.Block{
 			contextBlock,
+			broadcastChBlock,
 			incidentNameBlock,
 			securityBlock,
 			responderBlock,
 			commanderBlock,
 			environmentBlock,
 			regionBlock,
+			severityBlock,
+			impactBlock,
 			summaryBlock,
 			inviteeBlock,
 		},
@@ -316,7 +400,7 @@ func (h *botHandler) cmdIncident(ctx context.Context, w http.ResponseWriter, cmd
 	modalVReq.ClearOnClose = true
 	modalVReq.CallbackID = "declare_incident"
 
-	_, err := h.slackClient.OpenViewContext(ctx, cmd.TriggerID, modalVReq)
+	_, err = h.slackClient.OpenViewContext(ctx, cmd.TriggerID, modalVReq)
 	if err != nil {
 		log.Error().Err(err).Msg("Error opening view")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -354,10 +438,50 @@ func (h *botHandler) cmdResolveIncident(ctx context.Context, w http.ResponseWrit
 		h.opts.Localizer.MustLocalize(&i18n.LocalizeConfig{
 			DefaultMessage: &i18n.Message{
 				ID:    "ResolveIncidentDescription",
-				Other: "This will resolve the chosen incident and notify {{.broadcastChannel}} about the resolution"},
-			TemplateData: map[string]string{"broadcastChannel": fmt.Sprintf("<#%s>", h.opts.BroadcastChannelID)},
+				Other: "This will resolve an incident and notify about the resolution in a broadcast channel"},
 		}), false, false)
 	contextBlock := slack.NewContextBlock("context", contextText)
+
+	broadcastChLabel := slack.NewTextBlockObject(slack.PlainTextType,
+		h.opts.Localizer.MustLocalize(&i18n.LocalizeConfig{
+			DefaultMessage: &i18n.Message{
+				ID:    "BroadcastChannel",
+				Other: "Broadcast channel"},
+		}), false, false)
+	// TODO: Only get one page of results for now, implement pagination later if needed
+	authTestResp, _ := h.slackClient.AuthTestContext(ctx)
+	channels, _, err := h.slackClient.GetConversationsForUserContext(ctx, &slack.GetConversationsForUserParameters{
+		UserID:          authTestResp.UserID,
+		Limit:           100,
+		ExcludeArchived: true,
+	})
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to get conversations for bot")
+		w.WriteHeader(http.StatusInternalServerError)
+		return err
+	}
+	if channels == nil {
+		// If the bot has not been added as a member to any channel at all, it is not possible to post error in the UI
+		log.Error().Err(err).Msg("Bot must be added to a channel for broadcasting messages")
+		w.WriteHeader(http.StatusInternalServerError)
+		return err
+	}
+	channelIDs := []string{}
+	for i := range channels {
+		channelIDs = append(channelIDs, channels[i].ID)
+	}
+	botChannels := createOptionBlockObjects(channelIDs, "channel")
+	broadcastChOption := slack.NewOptionsSelectBlockElement(slack.OptTypeStatic, nil, "broadcast_channel", botChannels...)
+	initialChannelLabel := slack.NewTextBlockObject(slack.PlainTextType,
+		fmt.Sprintf("<#%s>", h.opts.BroadcastChannelID), false, false)
+	broadcastChOption.InitialOption = slack.NewOptionBlockObject(h.opts.BroadcastChannelID, initialChannelLabel, nil)
+	broadcastChBlock := slack.NewInputBlock("broadcast_channel", broadcastChLabel, broadcastChOption)
+	broadcastChBlock.Hint = slack.NewTextBlockObject(slack.PlainTextType,
+		h.opts.Localizer.MustLocalize(&i18n.LocalizeConfig{
+			DefaultMessage: &i18n.Message{
+				ID:    "BroadcastChannelHint",
+				Other: "The channels listed are the ones that the bot has been added to as a user"},
+		}), false, false)
 
 	incChanText := slack.NewTextBlockObject(slack.PlainTextType,
 		h.opts.Localizer.MustLocalize(&i18n.LocalizeConfig{
@@ -397,7 +521,7 @@ func (h *botHandler) cmdResolveIncident(ctx context.Context, w http.ResponseWrit
 			DefaultMessage: &i18n.Message{
 				ID:    "No",
 				Other: "No"},
-		})}, false)
+		})}, "")
 	archiveOptionsBlock := slack.NewRadioButtonsBlockElement("archive_choice", archiveOptions...)
 	archiveBlock := slack.NewInputBlock("archive_choice", archiveTxt, archiveOptionsBlock)
 
@@ -415,6 +539,7 @@ func (h *botHandler) cmdResolveIncident(ctx context.Context, w http.ResponseWrit
 	blocks := slack.Blocks{
 		BlockSet: []slack.Block{
 			contextBlock,
+			broadcastChBlock,
 			incChanBlock,
 			archiveBlock,
 			resolutionBlock,
@@ -430,7 +555,7 @@ func (h *botHandler) cmdResolveIncident(ctx context.Context, w http.ResponseWrit
 	modalVReq.ClearOnClose = true
 	modalVReq.CallbackID = "resolve_incident"
 
-	_, err := h.slackClient.OpenViewContext(ctx, cmd.TriggerID, modalVReq)
+	_, err = h.slackClient.OpenViewContext(ctx, cmd.TriggerID, modalVReq)
 	if err != nil {
 		log.Error().Err(err).Msg("Error opening view")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -442,12 +567,12 @@ func (h *botHandler) cmdResolveIncident(ctx context.Context, w http.ResponseWrit
 }
 
 // createOptionBlockObjects - utility function for generating option block objects
-func createOptionBlockObjects(options []string, users bool) []*slack.OptionBlockObject {
+func createOptionBlockObjects(options []string, optionType string) []*slack.OptionBlockObject {
 	optionBlockObjects := make([]*slack.OptionBlockObject, 0, len(options))
 	var text string
 	for _, o := range options {
-		if users {
-			text = fmt.Sprintf("<@%s>", o)
+		if optionType == "channel" {
+			text = fmt.Sprintf("<#%s>", o)
 		} else {
 			text = o
 		}

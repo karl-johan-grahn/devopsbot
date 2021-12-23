@@ -25,16 +25,7 @@ features:
 oauth_config:
   scopes:
     user:
-      - channels:read
-      - channels:write
-      - groups:read
-      - groups:write
-      - im:read
-      - im:write
-      - mpim:read
-      - mpim:write
       - reminders:write
-      - users:read
     bot:
       - channels:manage
       - channels:read
@@ -45,6 +36,7 @@ oauth_config:
       - groups:write
       - im:read
       - im:write
+      - incoming-webhook
       - mpim:read
       - mpim:write
       - users:read

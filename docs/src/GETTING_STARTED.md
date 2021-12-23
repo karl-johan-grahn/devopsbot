@@ -56,6 +56,18 @@ data:
       "eu-west-1",
       "us-east-1"
     ]
+  incident.severityLevels: |-
+    [
+      "high",
+      "medium",
+      "low"
+    ]
+  incident.impactLevels: |-
+    [
+      "high",
+      "medium",
+      "low"
+    ]
   server.prometheusNamespace: devopsbot
   tls.addr: :3443
   tls.cert: /var/devopsbot/tls.crt
@@ -149,10 +161,15 @@ spec:
             periodSeconds: 3
             failureThreshold: 2
           env:
-            - name: slack.accessToken
+            - name: slack.botAccessToken
               valueFrom:
                 secretKeyRef:
-                  key: slack.accessToken
+                  key: slack.botAccessToken
+                  name: app-secrets
+            - name: slack.userAccessToken
+              valueFrom:
+                secretKeyRef:
+                  key: slack.userAccessToken
                   name: app-secrets
             - name: slack.adminGroupID
               valueFrom:
@@ -188,6 +205,16 @@ spec:
               valueFrom:
                 configMapKeyRef:
                   key: incident.regions
+                  name: devopsbot-settings
+            - name: incident.severityLevels
+              valueFrom:
+                configMapKeyRef:
+                  key: incident.severityLevels
+                  name: devopsbot-settings
+            - name: incident.impactLevels
+              valueFrom:
+                configMapKeyRef:
+                  key: incident.impactLevels
                   name: devopsbot-settings
             - name: addr
               valueFrom:
@@ -243,7 +270,7 @@ that are empty by default:
 
 ```console
 $ bin/devopsbot \
-  --slack.accessToken=xoxb-.... \
+  --slack.botAccessToken=xoxb-.... \
   --slack.signingSecret=...
 ```
 

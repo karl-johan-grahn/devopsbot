@@ -1,4 +1,4 @@
-FROM golang:1.17.2 AS builder
+FROM docker.io/library/golang:1.17.5 AS builder
 
 WORKDIR /go/src/github.com/karl-johan-grahn/devopsbot
 
@@ -6,9 +6,9 @@ COPY . ./
 
 RUN make build
 
-FROM alpine:3.14.2
+FROM docker.io/library/alpine:3.15.0
 
-RUN apk add --no-cache ca-certificates=20191127-r5
+RUN apk add --no-cache ca-certificates=20191127-r7
 
 ARG VERSION
 ARG REVISION

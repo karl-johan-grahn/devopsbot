@@ -8,10 +8,11 @@ type Config struct {
 	// the prometheus namespace
 	NS string
 
-	SlackAccessToken   string
-	SlackSigningSecret string
-	SlackAdminGroupID  string
-	BroadcastChannelID string
+	SlackBotAccessToken  string
+	SlackUserAccessToken string
+	SlackSigningSecret   string
+	SlackAdminGroupID    string
+	BroadcastChannelID   string
 
 	Addr    string
 	TLSAddr string
@@ -20,6 +21,8 @@ type Config struct {
 
 	IncidentEnvs           string
 	IncidentRegions        string
+	IncidentSeverityLevels string
+	IncidentImpactLevels   string
 	IncidentDocTemplateURL string
 }
 
@@ -28,7 +31,8 @@ func FromViper(v *viper.Viper) (Config, error) {
 
 	c.NS = v.GetString("server.prometheusNamespace")
 
-	c.SlackAccessToken = v.GetString("slack.accessToken")
+	c.SlackBotAccessToken = v.GetString("slack.botAccessToken")
+	c.SlackUserAccessToken = v.GetString("slack.userAccessToken")
 	c.SlackSigningSecret = v.GetString("slack.signingSecret")
 	c.SlackAdminGroupID = v.GetString("slack.adminGroupID")
 	c.BroadcastChannelID = v.GetString("slack.broadcastChannelID")
@@ -40,6 +44,8 @@ func FromViper(v *viper.Viper) (Config, error) {
 
 	c.IncidentEnvs = v.GetString("incident.environments")
 	c.IncidentRegions = v.GetString("incident.regions")
+	c.IncidentSeverityLevels = v.GetString("incident.severityLevels")
+	c.IncidentImpactLevels = v.GetString("incident.impactLevels")
 	c.IncidentDocTemplateURL = v.GetString("incidentDocTemplateURL")
 
 	return c, nil
