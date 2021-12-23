@@ -104,6 +104,8 @@ func initConfig(cmd *cobra.Command) func() {
 		_ = viper.BindEnv("incidentDocTemplateURL", "incidentDocTemplateURL")
 		_ = viper.BindEnv("incident.environments", "incident.environments")
 		_ = viper.BindEnv("incident.regions", "incident.regions")
+		_ = viper.BindEnv("incident.severityLevels", "incident.severityLevels")
+		_ = viper.BindEnv("incident.impactLevels", "incident.impactLevels")
 		_ = viper.BindEnv("addr", "addr")
 		_ = viper.BindEnv(tlsAddr, tlsAddr)
 		_ = viper.BindEnv(tlsCert, tlsCert)
@@ -165,6 +167,8 @@ func newCmd() *cobra.Command {
 				IncidentDocTemplateURL: cfg.IncidentDocTemplateURL,
 				IncidentEnvs:           cfg.IncidentEnvs,
 				IncidentRegions:        cfg.IncidentRegions,
+				IncidentSeverityLevels: cfg.IncidentSeverityLevels,
+				IncidentImpactLevels:   cfg.IncidentImpactLevels,
 			}
 			log.Debug().Msgf("opts: %#v", opts)
 

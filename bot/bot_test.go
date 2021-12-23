@@ -126,11 +126,11 @@ func TestHandleCommand(t *testing.T) {
 
 func TestCreateOptionBlockObjects(t *testing.T) {
 	options := []string{}
-	optionBlockObjects := createOptionBlockObjects(options)
+	optionBlockObjects := createOptionBlockObjects(options, "")
 	assert.Empty(t, optionBlockObjects)
 
 	options = []string{"a", "b"}
-	optionBlockObjects = createOptionBlockObjects(options)
+	optionBlockObjects = createOptionBlockObjects(options, "")
 	assert.Equal(t, []*slack.OptionBlockObject{
 		(&slack.OptionBlockObject{
 			Text:  &slack.TextBlockObject{Type: "plain_text", Text: "a", Emoji: false, Verbatim: false},
@@ -139,6 +139,19 @@ func TestCreateOptionBlockObjects(t *testing.T) {
 		(&slack.OptionBlockObject{
 			Text:  &slack.TextBlockObject{Type: "plain_text", Text: "b", Emoji: false, Verbatim: false},
 			Value: "b",
+			URL:   ""}),
+	}, optionBlockObjects)
+
+	options = []string{"ID1", "ID2"}
+	optionBlockObjects = createOptionBlockObjects(options, "channel")
+	assert.Equal(t, []*slack.OptionBlockObject{
+		(&slack.OptionBlockObject{
+			Text:  &slack.TextBlockObject{Type: "plain_text", Text: "<#ID1>", Emoji: false, Verbatim: false},
+			Value: "ID1",
+			URL:   ""}),
+		(&slack.OptionBlockObject{
+			Text:  &slack.TextBlockObject{Type: "plain_text", Text: "<#ID2>", Emoji: false, Verbatim: false},
+			Value: "ID2",
 			URL:   ""}),
 	}, optionBlockObjects)
 }
