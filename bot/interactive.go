@@ -412,7 +412,7 @@ func (h *botHandler) sendMessage(ctx context.Context, channelID string, options 
 func postErrorResponse(ctx context.Context, verr map[string]string, w http.ResponseWriter) error {
 	log := zerolog.Ctx(ctx)
 	errorResponse := slack.NewErrorsViewSubmissionResponse(verr)
-	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
 	enc := json.NewEncoder(w)
 	err := enc.Encode(errorResponse)

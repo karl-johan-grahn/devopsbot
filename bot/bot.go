@@ -203,8 +203,35 @@ func (h *botHandler) cmdIncident(ctx context.Context, w http.ResponseWriter, cmd
 		return err
 	}
 	channelIDs := []string{}
+	var botInBroadcastChannel = false
 	for i := range channels {
 		channelIDs = append(channelIDs, channels[i].ID)
+		if channels[i].ID == h.opts.BroadcastChannelID {
+			botInBroadcastChannel = true
+		}
+	}
+	if !botInBroadcastChannel {
+		if err := h.respond(ctx, cmd.ResponseURL, cmd.UserID, slack.ResponseTypeEphemeral,
+			slack.MsgOptionText("The bot is not part of the default broadcast channel, invite it first there", false),
+			slack.MsgOptionAttachments(),
+		); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return err
+		}
+		w.WriteHeader(http.StatusInternalServerError)
+		return err
+	}
+	broadcastChannel, _ := h.slackClient.GetConversationInfoContext(ctx, h.opts.BroadcastChannelID, false)
+	if broadcastChannel.IsArchived {
+		if err := h.respond(ctx, cmd.ResponseURL, cmd.UserID, slack.ResponseTypeEphemeral,
+			slack.MsgOptionText("The default broadcast channel is archived, change the configuration to use an open default broadcast channel", false),
+			slack.MsgOptionAttachments(),
+		); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return err
+		}
+		w.WriteHeader(http.StatusInternalServerError)
+		return err
 	}
 	botChannels := createOptionBlockObjects(channelIDs, "channel")
 	broadcastChOption := slack.NewOptionsSelectBlockElement(slack.OptTypeStatic, nil, "broadcast_channel", botChannels...)
