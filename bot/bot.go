@@ -44,6 +44,10 @@ type Opts struct {
 	IncidentEnvs string
 	// IncidentRegions - the regions that could possibly be affected
 	IncidentRegions string
+	// IncidentSeverityLevels - the possible severity levels of an incident
+	IncidentSeverityLevels string
+	// IncidentImpactLevels - the possible impact levels of an incident
+	IncidentImpactLevels string
 	// Localizer - the localizer to use for the set of language preferences
 	Localizer *i18n.Localizer
 }
@@ -171,7 +175,6 @@ func (h *botHandler) cmdIncident(ctx context.Context, w http.ResponseWriter, cmd
 			DefaultMessage: &i18n.Message{
 				ID:    "IncidentCreationDescription",
 				Other: "This will create a new incident Slack channel, and notify about the incident in a broadcast channel. This incident response system is based on the Incident Command System."},
-			TemplateData: map[string]string{"broadcastChannel": fmt.Sprintf("<#%s>", h.opts.BroadcastChannelID)},
 		}), false, false)
 	contextBlock := slack.NewContextBlock("context", contextText)
 
@@ -201,14 +204,13 @@ func (h *botHandler) cmdIncident(ctx context.Context, w http.ResponseWriter, cmd
 	}
 	channelIDs := []string{}
 	for i := range channels {
-		channelIDs = append(channelIDs, fmt.Sprintf("<#%s>", channels[i].ID))
+		channelIDs = append(channelIDs, channels[i].ID)
 	}
-	botChannels := createOptionBlockObjects(channelIDs)
+	botChannels := createOptionBlockObjects(channelIDs, "channel")
 	broadcastChOption := slack.NewOptionsSelectBlockElement(slack.OptTypeStatic, nil, "broadcast_channel", botChannels...)
-	initialChannel := fmt.Sprintf("<#%s>", h.opts.BroadcastChannelID)
-	initialChannelLabel := slack.NewTextBlockObject(slack.PlainTextType, initialChannel, false, false)
-	initialChannelOptionBlockObject := slack.NewOptionBlockObject(initialChannel, initialChannelLabel, nil)
-	broadcastChOption.InitialOption = initialChannelOptionBlockObject
+	initialChannelLabel := slack.NewTextBlockObject(slack.PlainTextType,
+		fmt.Sprintf("<#%s>", h.opts.BroadcastChannelID), false, false)
+	broadcastChOption.InitialOption = slack.NewOptionBlockObject(h.opts.BroadcastChannelID, initialChannelLabel, nil)
 	broadcastChBlock := slack.NewInputBlock("broadcast_channel", broadcastChLabel, broadcastChOption)
 	broadcastChBlock.Hint = slack.NewTextBlockObject(slack.PlainTextType,
 		h.opts.Localizer.MustLocalize(&i18n.LocalizeConfig{
@@ -298,7 +300,7 @@ func (h *botHandler) cmdIncident(ctx context.Context, w http.ResponseWriter, cmd
 		w.WriteHeader(http.StatusInternalServerError)
 		return err
 	}
-	envOptions := createOptionBlockObjects(envs)
+	envOptions := createOptionBlockObjects(envs, "")
 	envOptionsBlock := slack.NewCheckboxGroupsBlockElement("incident_environment_affected", envOptions...)
 	environmentBlock := slack.NewInputBlock("incident_environment_affected", envTxt, envOptionsBlock)
 
@@ -314,9 +316,41 @@ func (h *botHandler) cmdIncident(ctx context.Context, w http.ResponseWriter, cmd
 		w.WriteHeader(http.StatusInternalServerError)
 		return err
 	}
-	regionOptions := createOptionBlockObjects(regions)
+	regionOptions := createOptionBlockObjects(regions, "")
 	regionOptionsBlock := slack.NewCheckboxGroupsBlockElement("incident_region_affected", regionOptions...)
 	regionBlock := slack.NewInputBlock("incident_region_affected", regionTxt, regionOptionsBlock)
+
+	severityTxt := slack.NewTextBlockObject(slack.PlainTextType,
+		h.opts.Localizer.MustLocalize(&i18n.LocalizeConfig{
+			DefaultMessage: &i18n.Message{
+				ID:    "Severity",
+				Other: "Severity"},
+		}), false, false)
+	var severityLevels []string
+	if err := json.Unmarshal([]byte(h.opts.IncidentSeverityLevels), &severityLevels); err != nil {
+		log.Error().Err(err).Msg("Failed to unmarshal incident severity levels")
+		w.WriteHeader(http.StatusInternalServerError)
+		return err
+	}
+	severityOptions := createOptionBlockObjects(severityLevels, "")
+	severityOptionsBlock := slack.NewRadioButtonsBlockElement("incident_severity_level", severityOptions...)
+	severityBlock := slack.NewInputBlock("incident_severity_level", severityTxt, severityOptionsBlock)
+
+	impactTxt := slack.NewTextBlockObject(slack.PlainTextType,
+		h.opts.Localizer.MustLocalize(&i18n.LocalizeConfig{
+			DefaultMessage: &i18n.Message{
+				ID:    "Impact",
+				Other: "Impact"},
+		}), false, false)
+	var impactLevels []string
+	if err := json.Unmarshal([]byte(h.opts.IncidentImpactLevels), &impactLevels); err != nil {
+		log.Error().Err(err).Msg("Failed to unmarshal incident impact levels")
+		w.WriteHeader(http.StatusInternalServerError)
+		return err
+	}
+	impactOptions := createOptionBlockObjects(impactLevels, "")
+	impactOptionsBlock := slack.NewRadioButtonsBlockElement("incident_impact_level", impactOptions...)
+	impactBlock := slack.NewInputBlock("incident_impact_level", impactTxt, impactOptionsBlock)
 
 	summaryText := slack.NewTextBlockObject(slack.PlainTextType,
 		h.opts.Localizer.MustLocalize(&i18n.LocalizeConfig{
@@ -350,6 +384,8 @@ func (h *botHandler) cmdIncident(ctx context.Context, w http.ResponseWriter, cmd
 			commanderBlock,
 			environmentBlock,
 			regionBlock,
+			severityBlock,
+			impactBlock,
 			summaryBlock,
 			inviteeBlock,
 		},
@@ -403,7 +439,6 @@ func (h *botHandler) cmdResolveIncident(ctx context.Context, w http.ResponseWrit
 			DefaultMessage: &i18n.Message{
 				ID:    "ResolveIncidentDescription",
 				Other: "This will resolve an incident and notify about the resolution in a broadcast channel"},
-			TemplateData: map[string]string{"broadcastChannel": fmt.Sprintf("<#%s>", h.opts.BroadcastChannelID)},
 		}), false, false)
 	contextBlock := slack.NewContextBlock("context", contextText)
 
@@ -433,14 +468,13 @@ func (h *botHandler) cmdResolveIncident(ctx context.Context, w http.ResponseWrit
 	}
 	channelIDs := []string{}
 	for i := range channels {
-		channelIDs = append(channelIDs, fmt.Sprintf("<#%s>", channels[i].ID))
+		channelIDs = append(channelIDs, channels[i].ID)
 	}
-	botChannels := createOptionBlockObjects(channelIDs)
+	botChannels := createOptionBlockObjects(channelIDs, "channel")
 	broadcastChOption := slack.NewOptionsSelectBlockElement(slack.OptTypeStatic, nil, "broadcast_channel", botChannels...)
-	initialChannel := fmt.Sprintf("<#%s>", h.opts.BroadcastChannelID)
-	initialChannelLabel := slack.NewTextBlockObject(slack.PlainTextType, initialChannel, false, false)
-	initialChannelOptionBlockObject := slack.NewOptionBlockObject(initialChannel, initialChannelLabel, nil)
-	broadcastChOption.InitialOption = initialChannelOptionBlockObject
+	initialChannelLabel := slack.NewTextBlockObject(slack.PlainTextType,
+		fmt.Sprintf("<#%s>", h.opts.BroadcastChannelID), false, false)
+	broadcastChOption.InitialOption = slack.NewOptionBlockObject(h.opts.BroadcastChannelID, initialChannelLabel, nil)
 	broadcastChBlock := slack.NewInputBlock("broadcast_channel", broadcastChLabel, broadcastChOption)
 	broadcastChBlock.Hint = slack.NewTextBlockObject(slack.PlainTextType,
 		h.opts.Localizer.MustLocalize(&i18n.LocalizeConfig{
@@ -487,7 +521,7 @@ func (h *botHandler) cmdResolveIncident(ctx context.Context, w http.ResponseWrit
 			DefaultMessage: &i18n.Message{
 				ID:    "No",
 				Other: "No"},
-		})})
+		})}, "")
 	archiveOptionsBlock := slack.NewRadioButtonsBlockElement("archive_choice", archiveOptions...)
 	archiveBlock := slack.NewInputBlock("archive_choice", archiveTxt, archiveOptionsBlock)
 
@@ -533,10 +567,16 @@ func (h *botHandler) cmdResolveIncident(ctx context.Context, w http.ResponseWrit
 }
 
 // createOptionBlockObjects - utility function for generating option block objects
-func createOptionBlockObjects(options []string) []*slack.OptionBlockObject {
+func createOptionBlockObjects(options []string, optionType string) []*slack.OptionBlockObject {
 	optionBlockObjects := make([]*slack.OptionBlockObject, 0, len(options))
+	var text string
 	for _, o := range options {
-		optionText := slack.NewTextBlockObject(slack.PlainTextType, o, false, false)
+		if optionType == "channel" {
+			text = fmt.Sprintf("<#%s>", o)
+		} else {
+			text = o
+		}
+		optionText := slack.NewTextBlockObject(slack.PlainTextType, text, false, false)
 		optionBlockObjects = append(optionBlockObjects, slack.NewOptionBlockObject(o, optionText, nil))
 	}
 	return optionBlockObjects
