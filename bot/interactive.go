@@ -150,6 +150,8 @@ type inputParams struct {
 	incidentInvitees             []string
 	incidentEnvironmentsAffected string
 	incidentRegionsAffected      string
+	IncidentSeverityLevel        string
+	IncidentImpactLevel          string
 	incidentSummary              string
 	incidentDeclarer             string
 	broadcastChannel             string
@@ -194,15 +196,21 @@ func (h *botHandler) declareIncident(ctx context.Context, payload *slack.Interac
 	for i, r := range payload.View.State.Values["incident_region_affected"]["incident_region_affected"].SelectedOptions {
 		incidentRegionsAffected[i] = r.Value
 	}
+	incidentSecurityRelated := false
+	if len(payload.View.State.Values["security_incident"]["security_incident"].SelectedOptions) > 0 {
+		incidentSecurityRelated = payload.View.State.Values["security_incident"]["security_incident"].SelectedOptions[0].Value == "yes"
+	}
 	inputParams := &inputParams{
 		broadcastChannel:             payload.View.State.Values["broadcast_channel"]["broadcast_channel"].SelectedOption.Value,
 		incidentChannelName:          incidentChannelName,
-		incidentSecurityRelated:      payload.View.State.Values["security_incident"]["security_incident"].SelectedOption.Value == "yes",
+		incidentSecurityRelated:      incidentSecurityRelated,
 		incidentResponder:            payload.View.State.Values["incident_responder"]["incident_responder"].SelectedUser,
 		incidentCommander:            payload.View.State.Values["incident_commander"]["incident_commander"].SelectedUser,
 		incidentInvitees:             payload.View.State.Values["incident_invitees"]["incident_invitees"].SelectedUsers,
 		incidentEnvironmentsAffected: strings.Join(incidentEnvironmentsAffected, ", "),
 		incidentRegionsAffected:      strings.Join(incidentRegionsAffected, ", "),
+		IncidentSeverityLevel:        payload.View.State.Values["incident_severity_level"]["incident_severity_level"].SelectedOption.Value,
+		IncidentImpactLevel:          payload.View.State.Values["incident_impact_level"]["incident_impact_level"].SelectedOption.Value,
 		incidentSummary:              payload.View.State.Values["incident_summary"]["incident_summary"].Value,
 		incidentDeclarer:             payload.User.ID,
 	}
@@ -237,17 +245,18 @@ func (h *botHandler) doIncidentTasks(ctx context.Context, params *inputParams, i
 	} else {
 		securityMessage = ""
 	}
-	// Set channel purpose and topic
-	overview := fmt.Sprintf("*Incident channel*\n"+
-		"*Incident summary:* %s\n"+
-		"*Environment affected:* %s\n"+
+	// Set channel purpose and topic - they can be maximum 250 characters
+	overview := fmt.Sprintf("*Environment affected:* %s\n"+
 		"*Region affected:* %s\n"+
+		"*Severity:* %s\n"+
+		"*Impact:* %s\n"+
 		"*Responder:* <@%s>\n"+
 		"*Commander:* <@%s>\n"+
 		"*Broadcast channel:* <#%s>\n\n"+
 		"Declared by: <@%s>\n"+
 		securityMessage,
-		params.incidentSummary, params.incidentEnvironmentsAffected, params.incidentRegionsAffected,
+		params.incidentEnvironmentsAffected, params.incidentRegionsAffected,
+		params.IncidentSeverityLevel, params.IncidentImpactLevel,
 		params.incidentResponder, params.incidentCommander, params.broadcastChannel, params.incidentDeclarer)
 	if _, err := h.slackClient.SetPurposeOfConversationContext(ctx, incidentChannel.ID, overview); err != nil {
 		if sendErr := h.sendMessage(ctx, params.broadcastChannel, slack.MsgOptionPostEphemeral(params.incidentDeclarer),
@@ -280,12 +289,15 @@ func (h *botHandler) doIncidentTasks(ctx context.Context, params *inputParams, i
 			"*Incident summary:* %s\n"+
 			"*Environment affected:* %s\n"+
 			"*Region affected:* %s\n"+
+			"*Severity:* %s\n"+
+			"*Impact:* %s\n"+
 			"*Responder:* <@%s>\n"+
 			"*Commander:* <@%s>\n"+
 			"*Incident channel:* <#%s>\n"+
 			securityMessage,
 			params.incidentDeclarer, params.incidentSummary, params.incidentEnvironmentsAffected,
-			params.incidentRegionsAffected, params.incidentResponder, params.incidentCommander,
+			params.incidentRegionsAffected, params.IncidentSeverityLevel, params.IncidentImpactLevel,
+			params.incidentResponder, params.incidentCommander,
 			incidentChannel.ID), false)); err != nil {
 		log.Error().Err(err).Msg(sendError)
 		return
@@ -305,9 +317,19 @@ func (h *botHandler) doIncidentTasks(ctx context.Context, params *inputParams, i
 	// Add channel reminder about updating progress
 	// Need to use user access token since bot token is not allowed token type: https://api.slack.com/methods/reminders.add
 	userSlackClient := slack.New(h.opts.UserAccessToken)
+	user, err := h.slackClient.GetUserInfoContext(ctx, params.incidentDeclarer)
+	if err != nil {
+		if sendErr := h.sendMessage(ctx, incidentChannel.ID, slack.MsgOptionPostEphemeral(params.incidentDeclarer),
+			slack.MsgOptionText(fmt.Sprintf("Failed to get user info context: %s", err.Error()), false)); sendErr != nil {
+			log.Error().Err(sendErr).Msg(sendError)
+			return
+		}
+	}
+	loc := time.FixedZone("CUSTOM-TZ", user.TZOffset)
+	now := time.Now().In(loc)
 	if _, err := userSlackClient.AddChannelReminder(incidentChannel.ID,
-		fmt.Sprintf("Reminder for IC <@%s>: Update progress about the incident in <#%s>", params.incidentCommander, params.broadcastChannel),
-		"Every 30 min"); err != nil {
+		fmt.Sprintf("\"Reminder for IC <@%s>: Update progress about the incident every 30 min in <#%s>, or remove the reminder and archive the channel if the incident is resolved\"", params.incidentCommander, params.broadcastChannel),
+		fmt.Sprintf("every day at %s", now.Add(time.Minute*time.Duration(30)).Format("03:04:05PM"))); err != nil {
 		if sendErr := h.sendMessage(ctx, incidentChannel.ID, slack.MsgOptionPostEphemeral(params.incidentDeclarer),
 			slack.MsgOptionText(fmt.Sprintf("Failed to add channel reminder: %s", err.Error()), false)); sendErr != nil {
 			log.Error().Err(sendErr).Msg(sendError)
@@ -409,7 +431,7 @@ func postErrorResponse(ctx context.Context, verr map[string]string, w http.Respo
 
 // createChannelName - create incident channel name based on input field
 func createChannelName(s string) string {
-	return fmt.Sprintf("inc_%s_%s", s, strings.ToLower(time.Now().Format("Jan2")))
+	return fmt.Sprintf("inc_%s_%s", s, strings.ToLower(time.Now().Format("2Jan2006")))
 }
 
 // createUserFriendlyConversationError - Map https://api.slack.com/methods/conversations.create error codes to user friendly messages
