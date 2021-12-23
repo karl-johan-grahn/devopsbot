@@ -56,6 +56,18 @@ data:
       "eu-west-1",
       "us-east-1"
     ]
+  incident.severityLevels: |-
+    [
+      "high",
+      "medium",
+      "low"
+    ]
+  incident.impactLevels: |-
+    [
+      "high",
+      "medium",
+      "low"
+    ]
   server.prometheusNamespace: devopsbot
   tls.addr: :3443
   tls.cert: /var/devopsbot/tls.crt
@@ -193,6 +205,16 @@ spec:
               valueFrom:
                 configMapKeyRef:
                   key: incident.regions
+                  name: devopsbot-settings
+            - name: incident.severityLevels
+              valueFrom:
+                configMapKeyRef:
+                  key: incident.severityLevels
+                  name: devopsbot-settings
+            - name: incident.impactLevels
+              valueFrom:
+                configMapKeyRef:
+                  key: incident.impactLevels
                   name: devopsbot-settings
             - name: addr
               valueFrom:
