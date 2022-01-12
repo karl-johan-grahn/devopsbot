@@ -12,8 +12,6 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/slack-go/slack"
 	"golang.org/x/text/language"
-
-	"github.com/karl-johan-grahn/devopsbot/internal/middleware"
 )
 
 type botHandler struct {
@@ -73,7 +71,7 @@ func (h *botHandler) handleCommand(w http.ResponseWriter, r *http.Request) {
 
 	cmd, err := slack.SlashCommandParse(r)
 	if err != nil {
-		_ = h.errorResponse(ctx, w, cmd, fmt.Sprintf("failed to parse command: %w", err), err)
+		_ = h.errorResponse(ctx, w, cmd, fmt.Sprintf("failed to parse command: %s", err), err)
 		return
 	}
 
@@ -91,7 +89,7 @@ func (h *botHandler) handleCommand(w http.ResponseWriter, r *http.Request) {
 	bundle.MustLoadMessageFile("active.fr.json")
 	user, err := h.slackClient.GetUserInfoContext(ctx, cmd.UserID)
 	if err != nil {
-		_ = h.errorResponse(ctx, w, cmd, fmt.Sprintf("failed to get user info: %w", err), err)
+		_ = h.errorResponse(ctx, w, cmd, fmt.Sprintf("failed to get user info: %s", err), err)
 		return
 	}
 	// Look up strings in English first as a fallback mechanism
