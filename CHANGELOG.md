@@ -6,7 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.14.0] - 2021-12-23
 ### Adds
-- Check if bot is part of broadcast channel and that it is not archived
+- Check if bot is part of broadcast channel and that broadcast channel is not archived
+- Do logging via UI to improve usability
 
 ## [0.13.9] - 2021-12-23
 ### Updates
