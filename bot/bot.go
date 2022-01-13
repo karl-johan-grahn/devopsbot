@@ -71,6 +71,7 @@ func (h *botHandler) handleCommand(w http.ResponseWriter, r *http.Request) {
 
 	cmd, err := slack.SlashCommandParse(r)
 	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
 		_ = h.errorResponse(ctx, w, cmd, fmt.Sprintf("failed to parse command: %s", err), err)
 		return
 	}
@@ -89,6 +90,7 @@ func (h *botHandler) handleCommand(w http.ResponseWriter, r *http.Request) {
 	bundle.MustLoadMessageFile("active.fr.json")
 	user, err := h.slackClient.GetUserInfoContext(ctx, cmd.UserID)
 	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
 		_ = h.errorResponse(ctx, w, cmd, fmt.Sprintf("failed to get user info: %s", err), err)
 		return
 	}
@@ -106,12 +108,14 @@ func (h *botHandler) handleCommand(w http.ResponseWriter, r *http.Request) {
 		case "incident":
 			err = h.cmdIncident(ctx, w, cmd)
 			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
 				_ = h.errorResponse(ctx, w, cmd, fmt.Sprintf("cmdIncident failed: %s", err), err)
 			}
 			return
 		case "resolve":
 			err = h.cmdResolveIncident(ctx, w, cmd)
 			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
 				_ = h.errorResponse(ctx, w, cmd, fmt.Sprintf("cmdResolveIncident failed: %s", err), err)
 			}
 			return
@@ -185,7 +189,7 @@ func (h *botHandler) cmdIncident(ctx context.Context, w http.ResponseWriter, cmd
 		return h.errorResponse(ctx, w, cmd, "Failed to get conversations for bot", err)
 	}
 	if channels == nil {
-		return h.errorResponse(ctx, w, cmd, "Bot must be added to a channel for broadcasting messages", err)
+		return h.errorResponse(ctx, w, cmd, "Bot must be added to a channel for broadcasting messages", nil)
 	}
 	channelIDs := []string{}
 	var botInBroadcastChannel = false
@@ -196,9 +200,9 @@ func (h *botHandler) cmdIncident(ctx context.Context, w http.ResponseWriter, cmd
 		}
 	}
 	if !botInBroadcastChannel {
-		return h.errorResponse(ctx, w, cmd, fmt.Sprintf("The bot is not part of the configured broadcast channel <#%s>, invite it there first", h.opts.BroadcastChannelID), err)
+		return h.errorResponse(ctx, w, cmd, fmt.Sprintf("The bot is not part of the configured broadcast channel <#%s>, invite it there first", h.opts.BroadcastChannelID), nil)
 	}
-	broadcastChannel, _ := h.slackClient.GetConversationInfoContext(ctx, h.opts.BroadcastChannelID, false)
+	broadcastChannel, err := h.slackClient.GetConversationInfoContext(ctx, h.opts.BroadcastChannelID, false)
 	if broadcastChannel.IsArchived {
 		return h.errorResponse(ctx, w, cmd, fmt.Sprintf("The configured broadcast channel <#%s> is archived, update the configuration to use an open broadcast channel", h.opts.BroadcastChannelID), err)
 	}
@@ -443,7 +447,7 @@ func (h *botHandler) cmdResolveIncident(ctx context.Context, w http.ResponseWrit
 		return h.errorResponse(ctx, w, cmd, fmt.Sprintf("Failed to get conversations for bot: %s", err), err)
 	}
 	if channels == nil {
-		return h.errorResponse(ctx, w, cmd, fmt.Sprintf("Bot must be added to a channel for broadcasting messages: %s", err), err)
+		return h.errorResponse(ctx, w, cmd, fmt.Sprintf("Bot must be added to a channel for broadcasting messages: %s", err), nil)
 	}
 	channelIDs := []string{}
 	for i := range channels {
@@ -565,10 +569,10 @@ func (h *botHandler) errorResponse(ctx context.Context, w http.ResponseWriter, c
 		slack.MsgOptionText(errorText, false),
 		slack.MsgOptionAttachments(),
 	); sendErr != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		// w.WriteHeader(http.StatusInternalServerError)
 		return sendErr
 	}
-	w.WriteHeader(http.StatusInternalServerError)
+	// w.WriteHeader(http.StatusInternalServerError)
 	return err
 }
 
