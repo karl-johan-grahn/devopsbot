@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.14.0] - 2022-01-12
+### Adds
+- Check if bot is part of broadcast channel and that broadcast channel is not archived
+- Do logging via UI to improve usability
+- Update docker.io/library/golang Docker tag to v1.17.6
+- Update github.com/prometheus/client_golang to v1.11.0
+
 ## [0.13.9] - 2021-12-23
 ### Updates
 - Update golang.org/x/term commit hash to 03fcf44

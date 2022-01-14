@@ -12,8 +12,6 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/slack-go/slack"
 	"golang.org/x/text/language"
-
-	"github.com/karl-johan-grahn/devopsbot/internal/middleware"
 )
 
 type botHandler struct {
@@ -73,9 +71,8 @@ func (h *botHandler) handleCommand(w http.ResponseWriter, r *http.Request) {
 
 	cmd, err := slack.SlashCommandParse(r)
 	if err != nil {
-		err = middleware.NewHTTPError(fmt.Errorf("failed to parse command: %w", err), r)
-		log.Error().Err(err).Send()
 		w.WriteHeader(http.StatusInternalServerError)
+		_ = h.errorResponse(ctx, w, cmd, fmt.Sprintf("failed to parse command: %s", err), err)
 		return
 	}
 
@@ -93,9 +90,8 @@ func (h *botHandler) handleCommand(w http.ResponseWriter, r *http.Request) {
 	bundle.MustLoadMessageFile("active.fr.json")
 	user, err := h.slackClient.GetUserInfoContext(ctx, cmd.UserID)
 	if err != nil {
-		err = middleware.NewHTTPError(fmt.Errorf("failed to get user info: %w", err), r)
-		log.Error().Err(err).Send()
 		w.WriteHeader(http.StatusInternalServerError)
+		_ = h.errorResponse(ctx, w, cmd, fmt.Sprintf("failed to get user info: %s", err), err)
 		return
 	}
 	// Look up strings in English first as a fallback mechanism
@@ -112,15 +108,15 @@ func (h *botHandler) handleCommand(w http.ResponseWriter, r *http.Request) {
 		case "incident":
 			err = h.cmdIncident(ctx, w, cmd)
 			if err != nil {
-				err = middleware.NewHTTPError(err, r)
-				log.Error().Err(err).Msg("cmdIncident failed")
+				w.WriteHeader(http.StatusInternalServerError)
+				_ = h.errorResponse(ctx, w, cmd, fmt.Sprintf("cmdIncident failed: %s", err), err)
 			}
 			return
 		case "resolve":
 			err = h.cmdResolveIncident(ctx, w, cmd)
 			if err != nil {
-				err = middleware.NewHTTPError(err, r)
-				log.Error().Err(err).Msg("cmdResolveIncident failed")
+				w.WriteHeader(http.StatusInternalServerError)
+				_ = h.errorResponse(ctx, w, cmd, fmt.Sprintf("cmdResolveIncident failed: %s", err), err)
 			}
 			return
 		default:
@@ -149,8 +145,6 @@ func (h *botHandler) handleCommand(w http.ResponseWriter, r *http.Request) {
 
 // cmdIncident - general handler for /devops incident commands
 func (h *botHandler) cmdIncident(ctx context.Context, w http.ResponseWriter, cmd slack.SlashCommand) error {
-	log := zerolog.Ctx(ctx)
-
 	titleText := slack.NewTextBlockObject(slack.PlainTextType,
 		h.opts.Localizer.MustLocalize(&i18n.LocalizeConfig{
 			DefaultMessage: &i18n.Message{
@@ -192,19 +186,25 @@ func (h *botHandler) cmdIncident(ctx context.Context, w http.ResponseWriter, cmd
 		ExcludeArchived: true,
 	})
 	if err != nil {
-		log.Error().Err(err).Msg("Failed to get conversations for bot")
-		w.WriteHeader(http.StatusInternalServerError)
-		return err
+		return h.errorResponse(ctx, w, cmd, fmt.Sprintf("Failed to get conversations for bot: %s", err), err)
 	}
 	if channels == nil {
-		// If the bot has not been added as a member to any channel at all, it is not possible to post error in the UI
-		log.Error().Err(err).Msg("Bot must be added to a channel for broadcasting messages")
-		w.WriteHeader(http.StatusInternalServerError)
-		return err
+		return h.errorResponse(ctx, w, cmd, "Bot must be added to a channel for broadcasting messages", nil)
 	}
 	channelIDs := []string{}
+	var botInBroadcastChannel = false
 	for i := range channels {
 		channelIDs = append(channelIDs, channels[i].ID)
+		if channels[i].ID == h.opts.BroadcastChannelID {
+			botInBroadcastChannel = true
+		}
+	}
+	if !botInBroadcastChannel {
+		return h.errorResponse(ctx, w, cmd, fmt.Sprintf("The bot is not part of the configured broadcast channel <#%s>, invite it there first", h.opts.BroadcastChannelID), nil)
+	}
+	broadcastChannel, err := h.slackClient.GetConversationInfoContext(ctx, h.opts.BroadcastChannelID, false)
+	if broadcastChannel.IsArchived {
+		return h.errorResponse(ctx, w, cmd, fmt.Sprintf("The configured broadcast channel <#%s> is archived, update the configuration to use an open broadcast channel", h.opts.BroadcastChannelID), err)
 	}
 	botChannels := createOptionBlockObjects(channelIDs, "channel")
 	broadcastChOption := slack.NewOptionsSelectBlockElement(slack.OptTypeStatic, nil, "broadcast_channel", botChannels...)
@@ -296,9 +296,7 @@ func (h *botHandler) cmdIncident(ctx context.Context, w http.ResponseWriter, cmd
 		}), false, false)
 	var envs []string
 	if err := json.Unmarshal([]byte(h.opts.IncidentEnvs), &envs); err != nil {
-		log.Error().Err(err).Msg("Failed to unmarshal incident environments")
-		w.WriteHeader(http.StatusInternalServerError)
-		return err
+		return h.errorResponse(ctx, w, cmd, "Failed to unmarshal incident environments", err)
 	}
 	envOptions := createOptionBlockObjects(envs, "")
 	envOptionsBlock := slack.NewCheckboxGroupsBlockElement("incident_environment_affected", envOptions...)
@@ -312,9 +310,7 @@ func (h *botHandler) cmdIncident(ctx context.Context, w http.ResponseWriter, cmd
 		}), false, false)
 	var regions []string
 	if err := json.Unmarshal([]byte(h.opts.IncidentRegions), &regions); err != nil {
-		log.Error().Err(err).Msg("Failed to unmarshal incident regions")
-		w.WriteHeader(http.StatusInternalServerError)
-		return err
+		return h.errorResponse(ctx, w, cmd, "Failed to unmarshal incident regions", err)
 	}
 	regionOptions := createOptionBlockObjects(regions, "")
 	regionOptionsBlock := slack.NewCheckboxGroupsBlockElement("incident_region_affected", regionOptions...)
@@ -328,9 +324,7 @@ func (h *botHandler) cmdIncident(ctx context.Context, w http.ResponseWriter, cmd
 		}), false, false)
 	var severityLevels []string
 	if err := json.Unmarshal([]byte(h.opts.IncidentSeverityLevels), &severityLevels); err != nil {
-		log.Error().Err(err).Msg("Failed to unmarshal incident severity levels")
-		w.WriteHeader(http.StatusInternalServerError)
-		return err
+		return h.errorResponse(ctx, w, cmd, "Failed to unmarshal incident severity levels", err)
 	}
 	severityOptions := createOptionBlockObjects(severityLevels, "")
 	severityOptionsBlock := slack.NewRadioButtonsBlockElement("incident_severity_level", severityOptions...)
@@ -344,9 +338,7 @@ func (h *botHandler) cmdIncident(ctx context.Context, w http.ResponseWriter, cmd
 		}), false, false)
 	var impactLevels []string
 	if err := json.Unmarshal([]byte(h.opts.IncidentImpactLevels), &impactLevels); err != nil {
-		log.Error().Err(err).Msg("Failed to unmarshal incident impact levels")
-		w.WriteHeader(http.StatusInternalServerError)
-		return err
+		return h.errorResponse(ctx, w, cmd, "Failed to unmarshal incident impact levels", err)
 	}
 	impactOptions := createOptionBlockObjects(impactLevels, "")
 	impactOptionsBlock := slack.NewRadioButtonsBlockElement("incident_impact_level", impactOptions...)
@@ -402,9 +394,7 @@ func (h *botHandler) cmdIncident(ctx context.Context, w http.ResponseWriter, cmd
 
 	_, err = h.slackClient.OpenViewContext(ctx, cmd.TriggerID, modalVReq)
 	if err != nil {
-		log.Error().Err(err).Msg("Error opening view")
-		w.WriteHeader(http.StatusInternalServerError)
-		return err
+		return h.errorResponse(ctx, w, cmd, fmt.Sprintf("Error opening view: %s", err), err)
 	}
 
 	w.WriteHeader(http.StatusOK)
@@ -413,8 +403,6 @@ func (h *botHandler) cmdIncident(ctx context.Context, w http.ResponseWriter, cmd
 
 // cmdResolveIncident - handler for resolving incident
 func (h *botHandler) cmdResolveIncident(ctx context.Context, w http.ResponseWriter, cmd slack.SlashCommand) error {
-	log := zerolog.Ctx(ctx)
-
 	titleText := slack.NewTextBlockObject(slack.PlainTextType,
 		h.opts.Localizer.MustLocalize(&i18n.LocalizeConfig{
 			DefaultMessage: &i18n.Message{
@@ -456,19 +444,25 @@ func (h *botHandler) cmdResolveIncident(ctx context.Context, w http.ResponseWrit
 		ExcludeArchived: true,
 	})
 	if err != nil {
-		log.Error().Err(err).Msg("Failed to get conversations for bot")
-		w.WriteHeader(http.StatusInternalServerError)
-		return err
+		return h.errorResponse(ctx, w, cmd, fmt.Sprintf("Failed to get conversations for bot: %s", err), err)
 	}
 	if channels == nil {
-		// If the bot has not been added as a member to any channel at all, it is not possible to post error in the UI
-		log.Error().Err(err).Msg("Bot must be added to a channel for broadcasting messages")
-		w.WriteHeader(http.StatusInternalServerError)
-		return err
+		return h.errorResponse(ctx, w, cmd, "Bot must be added to a channel for broadcasting messages", nil)
 	}
 	channelIDs := []string{}
+	var botInBroadcastChannel = false
 	for i := range channels {
 		channelIDs = append(channelIDs, channels[i].ID)
+		if channels[i].ID == h.opts.BroadcastChannelID {
+			botInBroadcastChannel = true
+		}
+	}
+	if !botInBroadcastChannel {
+		return h.errorResponse(ctx, w, cmd, fmt.Sprintf("The bot is not part of the configured broadcast channel <#%s>, invite it there first", h.opts.BroadcastChannelID), nil)
+	}
+	broadcastChannel, err := h.slackClient.GetConversationInfoContext(ctx, h.opts.BroadcastChannelID, false)
+	if broadcastChannel.IsArchived {
+		return h.errorResponse(ctx, w, cmd, fmt.Sprintf("The configured broadcast channel <#%s> is archived, update the configuration to use an open broadcast channel", h.opts.BroadcastChannelID), err)
 	}
 	botChannels := createOptionBlockObjects(channelIDs, "channel")
 	broadcastChOption := slack.NewOptionsSelectBlockElement(slack.OptTypeStatic, nil, "broadcast_channel", botChannels...)
@@ -557,9 +551,7 @@ func (h *botHandler) cmdResolveIncident(ctx context.Context, w http.ResponseWrit
 
 	_, err = h.slackClient.OpenViewContext(ctx, cmd.TriggerID, modalVReq)
 	if err != nil {
-		log.Error().Err(err).Msg("Error opening view")
-		w.WriteHeader(http.StatusInternalServerError)
-		return err
+		return h.errorResponse(ctx, w, cmd, fmt.Sprintf("Error opening view: %s", err), err)
 	}
 
 	w.WriteHeader(http.StatusOK)
@@ -580,6 +572,17 @@ func createOptionBlockObjects(options []string, optionType string) []*slack.Opti
 		optionBlockObjects = append(optionBlockObjects, slack.NewOptionBlockObject(o, optionText, nil))
 	}
 	return optionBlockObjects
+}
+
+// errorResponse - send ephemeral error response via Slack UI
+func (h *botHandler) errorResponse(ctx context.Context, w http.ResponseWriter, cmd slack.SlashCommand, errorText string, err error) error {
+	if sendErr := h.respond(ctx, cmd.ResponseURL, cmd.UserID, slack.ResponseTypeEphemeral,
+		slack.MsgOptionText(errorText, false),
+		slack.MsgOptionAttachments(),
+	); sendErr != nil {
+		return sendErr
+	}
+	return err
 }
 
 // respond - a simplified way to respond
