@@ -580,10 +580,8 @@ func (h *botHandler) errorResponse(ctx context.Context, w http.ResponseWriter, c
 		slack.MsgOptionText(errorText, false),
 		slack.MsgOptionAttachments(),
 	); sendErr != nil {
-		// w.WriteHeader(http.StatusInternalServerError)
 		return sendErr
 	}
-	// w.WriteHeader(http.StatusInternalServerError)
 	return err
 }
 
