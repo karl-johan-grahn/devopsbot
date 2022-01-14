@@ -186,7 +186,7 @@ func (h *botHandler) cmdIncident(ctx context.Context, w http.ResponseWriter, cmd
 		ExcludeArchived: true,
 	})
 	if err != nil {
-		return h.errorResponse(ctx, w, cmd, "Failed to get conversations for bot", err)
+		return h.errorResponse(ctx, w, cmd, fmt.Sprintf("Failed to get conversations for bot: %s", err), err)
 	}
 	if channels == nil {
 		return h.errorResponse(ctx, w, cmd, "Bot must be added to a channel for broadcasting messages", nil)
@@ -447,11 +447,22 @@ func (h *botHandler) cmdResolveIncident(ctx context.Context, w http.ResponseWrit
 		return h.errorResponse(ctx, w, cmd, fmt.Sprintf("Failed to get conversations for bot: %s", err), err)
 	}
 	if channels == nil {
-		return h.errorResponse(ctx, w, cmd, fmt.Sprintf("Bot must be added to a channel for broadcasting messages: %s", err), nil)
+		return h.errorResponse(ctx, w, cmd, "Bot must be added to a channel for broadcasting messages", nil)
 	}
 	channelIDs := []string{}
+	var botInBroadcastChannel = false
 	for i := range channels {
 		channelIDs = append(channelIDs, channels[i].ID)
+		if channels[i].ID == h.opts.BroadcastChannelID {
+			botInBroadcastChannel = true
+		}
+	}
+	if !botInBroadcastChannel {
+		return h.errorResponse(ctx, w, cmd, fmt.Sprintf("The bot is not part of the configured broadcast channel <#%s>, invite it there first", h.opts.BroadcastChannelID), nil)
+	}
+	broadcastChannel, err := h.slackClient.GetConversationInfoContext(ctx, h.opts.BroadcastChannelID, false)
+	if broadcastChannel.IsArchived {
+		return h.errorResponse(ctx, w, cmd, fmt.Sprintf("The configured broadcast channel <#%s> is archived, update the configuration to use an open broadcast channel", h.opts.BroadcastChannelID), err)
 	}
 	botChannels := createOptionBlockObjects(channelIDs, "channel")
 	broadcastChOption := slack.NewOptionsSelectBlockElement(slack.OptTypeStatic, nil, "broadcast_channel", botChannels...)
