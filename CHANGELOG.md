@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.14.2] - 2022-02-13
+### Updates
+- Update docker.io/library/golang Docker tag to v1.17.7
+
+## [0.14.1] - 2022-02-13
+### Updates
+- Update module github.com/slack-go/slack to v0.10.2
+
 ## [0.14.0] - 2022-01-12
 ### Adds
 - Check if bot is part of broadcast channel and that broadcast channel is not archived
