@@ -22,7 +22,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Spell check
-        uses: errata-ai/vale-action@v1.4.3
+        uses: errata-ai/vale-action@v1.5.0
         with:
           styles: https://github.com/errata-ai/write-good/releases/latest/download/write-good.zip
           files: docs/src
