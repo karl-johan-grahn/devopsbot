@@ -19,7 +19,7 @@ jobs:
       contents: read
       packages: write
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       # Login against a Docker registry except on PR
       - name: Log into Docker registry ${{env.REGISTRY}}
         if: github.event_name != 'pull_request'
