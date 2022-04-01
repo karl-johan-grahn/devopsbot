@@ -1,5 +1,5 @@
 # Incident declaration automation
-Devopsbot automates incident declaration:
+`devopsbot` automates incident declaration:
 - Incident responders and commanders should focus on the essential tasks of resolving the incident
 - Automate the repetitive steps in the incident management process
 - Keep affected stakeholders informed about the status of the incident
@@ -18,7 +18,7 @@ An incident is defined as something that:
 ## During incidents
 The workflow during an incident is as follows:
 
-![incident declaration flow using devopsbot](./devopsbot.drawio.png)
+![incident declaration flow using the bot](./devopsbot.drawio.png)
 
 ## After incidents
 When an incident has been declared as resolved, there is a need to communicate the resolution and
