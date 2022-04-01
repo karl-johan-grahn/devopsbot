@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.14.10] - 2022-04-01
+### Updates
+- Update actions/setup-go action to v3
+
+## [0.14.9] - 2022-04-01
+### Updates
+- Update docker/login-action action to v1.14.1
+
+## [0.14.8] - 2022-04-01
+### Updates
+- Update errata-ai/vale-action action to v1.5.0
+
+## [0.14.7] - 2022-04-01
+### Updates
+- Update actions/checkout action to v3
+
 ## [0.14.6] - 2022-04-01
 ### Updates
 - Update docker/build-push-action action to v2.10.0
