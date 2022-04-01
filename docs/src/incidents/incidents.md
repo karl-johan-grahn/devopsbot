@@ -18,7 +18,7 @@ An incident is defined as something that:
 ## During incidents
 The workflow during an incident is as follows:
 
-![incident declaration flow using `devopsbot`](./devopsbot.drawio.png)
+![incident declaration flow using the devops bot](./devopsbot.drawio.png)
 
 ## After incidents
 When an incident has been declared as resolved, there is a need to communicate the resolution and
