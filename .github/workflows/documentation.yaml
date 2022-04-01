@@ -12,7 +12,7 @@ jobs:
   link_check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Link check
         uses: gaurav-nelson/github-action-markdown-link-check@v1
         with:
@@ -20,9 +20,9 @@ jobs:
   spell_check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Spell check
-        uses: errata-ai/vale-action@v1.4.3
+        uses: errata-ai/vale-action@v1.5.0
         with:
           styles: https://github.com/errata-ai/write-good/releases/latest/download/write-good.zip
           files: docs/src
@@ -33,7 +33,7 @@ jobs:
     concurrency:
       group: ${{github.workflow}}-${{github.ref}}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Setup mdBook
         uses: peaceiris/actions-mdbook@v1
         with:
