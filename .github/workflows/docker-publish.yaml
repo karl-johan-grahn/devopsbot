@@ -31,7 +31,7 @@ jobs:
       # Extract metadata for Docker for subsequent registry push
       - name: Extract Docker metadata
         id: meta
-        uses: docker/metadata-action@v3.6.2
+        uses: docker/metadata-action@v4.0.1
         with:
           images: ${{env.REGISTRY}}/${{env.IMAGE_NAME}}
           tags: |
