@@ -6,7 +6,7 @@ COPY . ./
 
 RUN make build
 
-FROM docker.io/library/alpine:3.15.0
+FROM docker.io/library/alpine:3.16.0
 
 ARG VERSION
 ARG REVISION

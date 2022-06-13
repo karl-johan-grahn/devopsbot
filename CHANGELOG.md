@@ -4,6 +4,58 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.15.12] - 2022-06-13
+### Update
+- Update golang.org/x/term digest to 065cf7b
+
+## [0.15.11] - 2022-06-13
+### Update
+- Update docker/build-push-action action to v3
+
+## [0.15.10] - 2022-06-13
+### Update
+- Update docker/login-action action to v2
+
+## [0.15.9] - 2022-06-13
+### Update
+- Update module github.com/spf13/viper to v1.12.0
+
+## [0.15.8] - 2022-06-13
+### Update
+- Update module github.com/prometheus/client_golang to v1.12.2
+
+## [0.15.7] - 2022-06-13
+### Update
+- Update module github.com/stretchr/testify to v1.7.2
+
+## [0.15.6] - 2022-06-13
+### Update
+- Update dependency docker.io/library/alpine to v3.16.0
+
+## [0.15.5] - 2022-06-13
+### Update
+- Update module github.com/spf13/cobra to v1.4.0
+
+## [0.15.4] - 2022-06-13
+### Update
+- Update module github.com/rs/zerolog to v1.27.0
+
+## [0.15.3] - 2022-06-13
+### Update
+- Update module github.com/nicksnyder/go-i18n/v2 to v2.2.0
+
+## [0.15.2] - 2022-06-13
+### Update
+- Update docker/metadata-action action to v4
+
+## [0.15.1] - 2022-06-13
+### Update
+- Update github/codeql-action action to v2
+
+## [0.15.0] - 2022-06-13
+### Update
+- Update module github.com/slack-go/slack to v0.11.0
+
 ## [0.14.14] - 2022-05-13
 ### Update
 - Update incident documentation
