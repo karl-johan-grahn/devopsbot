@@ -1,6 +1,6 @@
 module github.com/karl-johan-grahn/devopsbot
 
-go 1.17
+go 1.18
 
 require (
 	github.com/gorilla/handlers v1.5.1
