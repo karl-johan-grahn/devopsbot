@@ -211,13 +211,13 @@ func (h *botHandler) cmdIncident(ctx context.Context, w http.ResponseWriter, cmd
 	initialChannelLabel := slack.NewTextBlockObject(slack.PlainTextType,
 		fmt.Sprintf("<#%s>", h.opts.BroadcastChannelID), false, false)
 	broadcastChOption.InitialOption = slack.NewOptionBlockObject(h.opts.BroadcastChannelID, initialChannelLabel, nil)
-	broadcastChBlock := slack.NewInputBlock("broadcast_channel", broadcastChLabel, broadcastChOption)
-	broadcastChBlock.Hint = slack.NewTextBlockObject(slack.PlainTextType,
+	broadcastChHint := slack.NewTextBlockObject(slack.PlainTextType,
 		h.opts.Localizer.MustLocalize(&i18n.LocalizeConfig{
 			DefaultMessage: &i18n.Message{
 				ID:    "BroadcastChannelHint",
 				Other: "The channels listed are the ones that the bot has been added to as a user"},
 		}), false, false)
+	broadcastChBlock := slack.NewInputBlock("broadcast_channel", broadcastChLabel, broadcastChHint, broadcastChOption)
 
 	// Only the inputs in input blocks will be included in view_submission’s view.state.values: https://slack.dev/java-slack-sdk/guides/modals
 	incidentNameText := slack.NewTextBlockObject(slack.PlainTextType,
@@ -232,14 +232,14 @@ func (h *botHandler) cmdIncident(ctx context.Context, w http.ResponseWriter, cmd
 	incidentNameElement.DispatchActionConfig = &slack.DispatchActionConfig{
 		TriggerActionsOn: []string{"on_character_entered"},
 	}
-	incidentNameBlock := slack.NewInputBlock("incident_name", incidentNameText, incidentNameElement)
-	incidentNameBlock.DispatchAction = true
-	incidentNameBlock.Hint = slack.NewTextBlockObject(slack.PlainTextType,
+	incidentNameHint := slack.NewTextBlockObject(slack.PlainTextType,
 		h.opts.Localizer.MustLocalize(&i18n.LocalizeConfig{
 			DefaultMessage: &i18n.Message{
 				ID:    "IncidentNameHint",
 				Other: "Incident names may only contain lowercase letters, numbers, hyphens, and underscores, and must be 60 characters or less"},
 		}), false, false)
+	incidentNameBlock := slack.NewInputBlock("incident_name", incidentNameText, incidentNameHint, incidentNameElement)
+	incidentNameBlock.DispatchAction = true
 
 	securityIncHeading := slack.NewTextBlockObject(slack.PlainTextType,
 		h.opts.Localizer.MustLocalize(&i18n.LocalizeConfig{
@@ -255,7 +255,7 @@ func (h *botHandler) cmdIncident(ctx context.Context, w http.ResponseWriter, cmd
 		}), false, false)
 	securityOptionBlockObject := slack.NewOptionBlockObject("yes", securityIncLabel, nil)
 	securityOptionsBlock := slack.NewCheckboxGroupsBlockElement("security_incident", securityOptionBlockObject)
-	securityBlock := slack.NewInputBlock("security_incident", securityIncHeading, securityOptionsBlock)
+	securityBlock := slack.NewInputBlock("security_incident", securityIncHeading, nil, securityOptionsBlock)
 	securityBlock.Optional = true
 
 	responderText := slack.NewTextBlockObject(slack.PlainTextType,
@@ -265,13 +265,13 @@ func (h *botHandler) cmdIncident(ctx context.Context, w http.ResponseWriter, cmd
 				Other: "Responder"},
 		}), false, false)
 	responderOption := slack.NewOptionsSelectBlockElement(slack.OptTypeUser, responderText, "incident_responder")
-	responderBlock := slack.NewInputBlock("incident_responder", responderText, responderOption)
-	responderBlock.Hint = slack.NewTextBlockObject(slack.PlainTextType,
+	responderHint := slack.NewTextBlockObject(slack.PlainTextType,
 		h.opts.Localizer.MustLocalize(&i18n.LocalizeConfig{
 			DefaultMessage: &i18n.Message{
 				ID:    "ResponderHint",
 				Other: "The responder leads the work of resolving the incident"},
 		}), false, false)
+	responderBlock := slack.NewInputBlock("incident_responder", responderText, responderHint, responderOption)
 
 	commanderText := slack.NewTextBlockObject(slack.PlainTextType,
 		h.opts.Localizer.MustLocalize(&i18n.LocalizeConfig{
@@ -280,13 +280,13 @@ func (h *botHandler) cmdIncident(ctx context.Context, w http.ResponseWriter, cmd
 				Other: "Commander"},
 		}), false, false)
 	commanderOption := slack.NewOptionsSelectBlockElement(slack.OptTypeUser, commanderText, "incident_commander")
-	commanderBlock := slack.NewInputBlock("incident_commander", commanderText, commanderOption)
-	commanderBlock.Hint = slack.NewTextBlockObject(slack.PlainTextType,
+	commanderHint := slack.NewTextBlockObject(slack.PlainTextType,
 		h.opts.Localizer.MustLocalize(&i18n.LocalizeConfig{
 			DefaultMessage: &i18n.Message{
 				ID:    "CommanderHint",
 				Other: "The incident commander coordinates, communicates, and controls the response"},
 		}), false, false)
+	commanderBlock := slack.NewInputBlock("incident_commander", commanderText, commanderHint, commanderOption)
 
 	envTxt := slack.NewTextBlockObject(slack.PlainTextType,
 		h.opts.Localizer.MustLocalize(&i18n.LocalizeConfig{
@@ -300,7 +300,7 @@ func (h *botHandler) cmdIncident(ctx context.Context, w http.ResponseWriter, cmd
 	}
 	envOptions := createOptionBlockObjects(envs, "")
 	envOptionsBlock := slack.NewCheckboxGroupsBlockElement("incident_environment_affected", envOptions...)
-	environmentBlock := slack.NewInputBlock("incident_environment_affected", envTxt, envOptionsBlock)
+	environmentBlock := slack.NewInputBlock("incident_environment_affected", envTxt, nil, envOptionsBlock)
 
 	regionTxt := slack.NewTextBlockObject(slack.PlainTextType,
 		h.opts.Localizer.MustLocalize(&i18n.LocalizeConfig{
@@ -314,7 +314,7 @@ func (h *botHandler) cmdIncident(ctx context.Context, w http.ResponseWriter, cmd
 	}
 	regionOptions := createOptionBlockObjects(regions, "")
 	regionOptionsBlock := slack.NewCheckboxGroupsBlockElement("incident_region_affected", regionOptions...)
-	regionBlock := slack.NewInputBlock("incident_region_affected", regionTxt, regionOptionsBlock)
+	regionBlock := slack.NewInputBlock("incident_region_affected", regionTxt, nil, regionOptionsBlock)
 
 	severityTxt := slack.NewTextBlockObject(slack.PlainTextType,
 		h.opts.Localizer.MustLocalize(&i18n.LocalizeConfig{
@@ -328,7 +328,7 @@ func (h *botHandler) cmdIncident(ctx context.Context, w http.ResponseWriter, cmd
 	}
 	severityOptions := createOptionBlockObjects(severityLevels, "")
 	severityOptionsBlock := slack.NewRadioButtonsBlockElement("incident_severity_level", severityOptions...)
-	severityBlock := slack.NewInputBlock("incident_severity_level", severityTxt, severityOptionsBlock)
+	severityBlock := slack.NewInputBlock("incident_severity_level", severityTxt, nil, severityOptionsBlock)
 
 	impactTxt := slack.NewTextBlockObject(slack.PlainTextType,
 		h.opts.Localizer.MustLocalize(&i18n.LocalizeConfig{
@@ -342,7 +342,7 @@ func (h *botHandler) cmdIncident(ctx context.Context, w http.ResponseWriter, cmd
 	}
 	impactOptions := createOptionBlockObjects(impactLevels, "")
 	impactOptionsBlock := slack.NewRadioButtonsBlockElement("incident_impact_level", impactOptions...)
-	impactBlock := slack.NewInputBlock("incident_impact_level", impactTxt, impactOptionsBlock)
+	impactBlock := slack.NewInputBlock("incident_impact_level", impactTxt, nil, impactOptionsBlock)
 
 	summaryText := slack.NewTextBlockObject(slack.PlainTextType,
 		h.opts.Localizer.MustLocalize(&i18n.LocalizeConfig{
@@ -354,7 +354,7 @@ func (h *botHandler) cmdIncident(ctx context.Context, w http.ResponseWriter, cmd
 	// Set an arbitrary max length to avoid prose summary
 	summaryElement.MaxLength = 200
 	summaryElement.Multiline = true
-	summaryBlock := slack.NewInputBlock("incident_summary", summaryText, summaryElement)
+	summaryBlock := slack.NewInputBlock("incident_summary", summaryText, nil, summaryElement)
 
 	inviteeLabel := slack.NewTextBlockObject(slack.PlainTextType,
 		h.opts.Localizer.MustLocalize(&i18n.LocalizeConfig{
@@ -363,7 +363,7 @@ func (h *botHandler) cmdIncident(ctx context.Context, w http.ResponseWriter, cmd
 				Other: "Invitees"},
 		}), false, false)
 	inviteeOption := slack.NewOptionsSelectBlockElement(slack.MultiOptTypeUser, inviteeLabel, "incident_invitees")
-	inviteeBlock := slack.NewInputBlock("incident_invitees", inviteeLabel, inviteeOption)
+	inviteeBlock := slack.NewInputBlock("incident_invitees", inviteeLabel, nil, inviteeOption)
 	inviteeBlock.Optional = true
 
 	blocks := slack.Blocks{
@@ -469,13 +469,13 @@ func (h *botHandler) cmdResolveIncident(ctx context.Context, w http.ResponseWrit
 	initialChannelLabel := slack.NewTextBlockObject(slack.PlainTextType,
 		fmt.Sprintf("<#%s>", h.opts.BroadcastChannelID), false, false)
 	broadcastChOption.InitialOption = slack.NewOptionBlockObject(h.opts.BroadcastChannelID, initialChannelLabel, nil)
-	broadcastChBlock := slack.NewInputBlock("broadcast_channel", broadcastChLabel, broadcastChOption)
-	broadcastChBlock.Hint = slack.NewTextBlockObject(slack.PlainTextType,
+	broadcastChHint := slack.NewTextBlockObject(slack.PlainTextType,
 		h.opts.Localizer.MustLocalize(&i18n.LocalizeConfig{
 			DefaultMessage: &i18n.Message{
 				ID:    "BroadcastChannelHint",
 				Other: "The channels listed are the ones that the bot has been added to as a user"},
 		}), false, false)
+	broadcastChBlock := slack.NewInputBlock("broadcast_channel", broadcastChLabel, broadcastChHint, broadcastChOption)
 
 	incChanText := slack.NewTextBlockObject(slack.PlainTextType,
 		h.opts.Localizer.MustLocalize(&i18n.LocalizeConfig{
@@ -490,14 +490,14 @@ func (h *botHandler) cmdResolveIncident(ctx context.Context, w http.ResponseWrit
 		ExcludeExternalSharedChannels: false,
 		ExcludeBotUsers:               false,
 	}
-	incChanBlock := slack.NewInputBlock("incident_channel", incChanText, incChanOption)
-	incChanBlock.DispatchAction = true
-	incChanBlock.Hint = slack.NewTextBlockObject(slack.PlainTextType,
+	incChanHint := slack.NewTextBlockObject(slack.PlainTextType,
 		h.opts.Localizer.MustLocalize(&i18n.LocalizeConfig{
 			DefaultMessage: &i18n.Message{
 				ID:    "IncidentChannelNamePattern",
 				Other: "Choose a channel that starts with 'inc_'"},
 		}), false, false)
+	incChanBlock := slack.NewInputBlock("incident_channel", incChanText, incChanHint, incChanOption)
+	incChanBlock.DispatchAction = true
 
 	archiveTxt := slack.NewTextBlockObject(slack.PlainTextType,
 		h.opts.Localizer.MustLocalize(&i18n.LocalizeConfig{
@@ -517,7 +517,7 @@ func (h *botHandler) cmdResolveIncident(ctx context.Context, w http.ResponseWrit
 				Other: "No"},
 		})}, "")
 	archiveOptionsBlock := slack.NewRadioButtonsBlockElement("archive_choice", archiveOptions...)
-	archiveBlock := slack.NewInputBlock("archive_choice", archiveTxt, archiveOptionsBlock)
+	archiveBlock := slack.NewInputBlock("archive_choice", archiveTxt, nil, archiveOptionsBlock)
 
 	resolutionLabel := slack.NewTextBlockObject(slack.PlainTextType,
 		h.opts.Localizer.MustLocalize(&i18n.LocalizeConfig{
@@ -528,7 +528,7 @@ func (h *botHandler) cmdResolveIncident(ctx context.Context, w http.ResponseWrit
 	resolutionElement := slack.NewPlainTextInputBlockElement(resolutionLabel, "resolution")
 	resolutionElement.MaxLength = 200
 	resolutionElement.Multiline = true
-	resolutionBlock := slack.NewInputBlock("resolution", resolutionLabel, resolutionElement)
+	resolutionBlock := slack.NewInputBlock("resolution", resolutionLabel, nil, resolutionElement)
 
 	blocks := slack.Blocks{
 		BlockSet: []slack.Block{
