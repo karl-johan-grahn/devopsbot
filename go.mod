@@ -5,7 +5,7 @@ go 1.17
 require (
 	github.com/gorilla/handlers v1.5.1
 	github.com/justinas/alice v1.2.0
-	github.com/nicksnyder/go-i18n/v2 v2.1.2
+	github.com/nicksnyder/go-i18n/v2 v2.2.0
 	github.com/prometheus/client_golang v1.12.1
 	github.com/rs/zerolog v1.26.1
 	github.com/slack-go/slack v0.11.0
@@ -17,7 +17,7 @@ require (
 )
 
 require (
-	github.com/BurntSushi/toml v0.4.1 // indirect
+	github.com/BurntSushi/toml v1.0.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
