@@ -8,7 +8,7 @@ on:
 jobs:
   lint:
     runs-on: ubuntu-latest
-    container: ghcr.io/opencontainers/golangci-lint:v1.39.0
+    container: ghcr.io/opencontainers/golangci-lint:v1.52.1
     steps:
       - uses: actions/checkout@v3
       - name: Lint
