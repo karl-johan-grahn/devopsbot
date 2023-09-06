@@ -4,6 +4,8 @@ It improves development efficiency by automating tasks such as:
 - Declaring incidents
 - Resolving incidents
 
+TEST
+
 The bot essentially automates the Incident Command System (ICS).
 
 ## Design Principles
