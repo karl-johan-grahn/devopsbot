@@ -1,4 +1,4 @@
-FROM docker.io/library/golang:1.18.4 AS builder
+FROM docker.io/library/golang:1.22.1 AS builder
 
 WORKDIR /go/src/github.com/karl-johan-grahn/devopsbot
 
