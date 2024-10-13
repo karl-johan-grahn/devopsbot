@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/gorilla/handlers v1.5.1
 	github.com/justinas/alice v1.2.0
-	github.com/nicksnyder/go-i18n/v2 v2.2.0
+	github.com/nicksnyder/go-i18n/v2 v2.4.1
 	github.com/prometheus/client_golang v1.12.2
 	github.com/rs/zerolog v1.27.0
 	github.com/slack-go/slack v0.11.0
@@ -13,7 +13,7 @@ require (
 	github.com/spf13/viper v1.12.0
 	github.com/stretchr/testify v1.8.0
 	golang.org/x/term v0.0.0-20220526004731-065cf7ba2467
-	golang.org/x/text v0.3.7
+	golang.org/x/text v0.19.0
 )
 
 require (
