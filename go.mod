@@ -8,7 +8,7 @@ require (
 	github.com/nicksnyder/go-i18n/v2 v2.2.0
 	github.com/prometheus/client_golang v1.12.2
 	github.com/rs/zerolog v1.27.0
-	github.com/slack-go/slack v0.11.0
+	github.com/slack-go/slack v0.15.0
 	github.com/spf13/cobra v1.5.0
 	github.com/spf13/viper v1.12.0
 	github.com/stretchr/testify v1.8.0
